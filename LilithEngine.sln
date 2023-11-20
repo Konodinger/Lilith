@@ -1,0 +1,33 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.34031.279
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LilithEngine", "LilithEngine\LilithEngine.vcxproj", "{C3440D6C-C516-4087-82B9-AE8018BDA035}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Éléments de solution", "Éléments de solution", "{C516941E-6565-4016-A419-6CAC11B299BC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C3440D6C-C516-4087-82B9-AE8018BDA035}.Debug|x64.ActiveCfg = Debug|x64
+		{C3440D6C-C516-4087-82B9-AE8018BDA035}.Debug|x64.Build.0 = Debug|x64
+		{C3440D6C-C516-4087-82B9-AE8018BDA035}.Debug|x86.ActiveCfg = Debug|Win32
+		{C3440D6C-C516-4087-82B9-AE8018BDA035}.Debug|x86.Build.0 = Debug|Win32
+		{C3440D6C-C516-4087-82B9-AE8018BDA035}.Release|x64.ActiveCfg = Release|x64
+		{C3440D6C-C516-4087-82B9-AE8018BDA035}.Release|x64.Build.0 = Release|x64
+		{C3440D6C-C516-4087-82B9-AE8018BDA035}.Release|x86.ActiveCfg = Release|Win32
+		{C3440D6C-C516-4087-82B9-AE8018BDA035}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A553E1E2-3A8A-4819-B6DE-F605B69CEFCC}
+	EndGlobalSection
+EndGlobal
