@@ -1,4 +1,4 @@
-#include "point_light_system.hpp"
+#include "lth_point_light_system.hpp"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -19,27 +19,28 @@ namespace lth {
 		float radius;
 	};
 
-	PointLightSystem::PointLightSystem(
+	LthPointLightSystem::LthPointLightSystem(
 		LthDevice& device,
 		VkRenderPass renderPass,
-		VkDescriptorSetLayout globalSetLayout)
+		DescriptorSetLayouts& setLayouts)
 		: lthDevice{ device } {
-		createPipelineLayout(globalSetLayout);
+		createPipelineLayout(setLayouts);
 		createPipeline(renderPass);
 	}
 
-	PointLightSystem::~PointLightSystem() {
+	LthPointLightSystem::~LthPointLightSystem() {
 		vkDestroyPipelineLayout(lthDevice.device(), pipelineLayout, nullptr);
 	}
 
-	void PointLightSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout) {
+	void LthPointLightSystem::createPipelineLayout(DescriptorSetLayouts& setLayouts) {
 
 		VkPushConstantRange pushConstantRange{};
 		pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 		pushConstantRange.offset = 0;
 		pushConstantRange.size = sizeof(PointLightPushConstants);
 
-		std::vector<VkDescriptorSetLayout> descriptorSetLayouts{ globalSetLayout };
+		std::vector<VkDescriptorSetLayout> descriptorSetLayouts{ setLayouts.globalSetLayout->getDescriptorSetLayout(),
+																setLayouts.gameObjectSetLayout->getDescriptorSetLayout()};
 
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -52,7 +53,7 @@ namespace lth {
 		}
 	}
 
-	void PointLightSystem::createPipeline(VkRenderPass renderPass) {
+	void LthPointLightSystem::createPipeline(VkRenderPass renderPass) {
 		assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout!");
 
 		PipelineConfigInfo pipelineConfig{};
@@ -62,7 +63,7 @@ namespace lth {
 		pipelineConfig.attributeDescriptions.clear();
 		pipelineConfig.renderPass = renderPass;
 		pipelineConfig.pipelineLayout = pipelineLayout;
-		pipelineConfig.multisampleInfo.rasterizationSamples = lthDevice.msaaSamples;
+		pipelineConfig.multisampleInfo.rasterizationSamples = lthDevice.getMsaaSamples();
 		lthPipeline = std::make_unique<LthPipeline>(
 			lthDevice,
 			pipelineConfig,
@@ -70,17 +71,13 @@ namespace lth {
 			"shaders/pointLight.frag.spv");
 	}
 
-	void PointLightSystem::update(FrameInfo& frameInfo, GlobalUBO& ubo) {
-		auto rotateLight = glm::rotate(glm::mat4(1.f), 0.5f * frameInfo.frameTime, { 0.f, -1.f, 0.f });
-
+	void LthPointLightSystem::update(FrameInfo& frameInfo, GlobalUBO& ubo) {
 		int lightIndex = 0;
 		for (auto& kv : frameInfo.gameObjects) {
 			auto& obj = kv.second;
 			if (obj.pointLight == nullptr) continue;
 
 			assert(lightIndex < MAX_LIGHTS && "Point lights exceed maximum specified!");
-
-			obj.transform.setTranslation(glm::vec3(rotateLight * glm::vec4(obj.transform.getTranslation(), 1.f)));
 
 			ubo.pointLights[lightIndex].position = obj.transform.getTranslation();
 			ubo.pointLights[lightIndex].lightQuadraticAttenuation = obj.pointLight->lightQuadraticAttenuation;
@@ -91,7 +88,7 @@ namespace lth {
 		ubo.numLights = lightIndex;
 	}
 
-	void PointLightSystem::render(FrameInfo& frameInfo) {
+	void LthPointLightSystem::render(FrameInfo& frameInfo) {
 
 		//Note: looping through every gameobject is inefficient and need to be readjusted.
 		std::map<float, LthGameObject::id_t> sorted;

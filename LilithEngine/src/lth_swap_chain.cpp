@@ -210,13 +210,13 @@ namespace lth {
     void LthSwapChain::createRenderPass() {
       VkAttachmentDescription colorAttachment{};
       colorAttachment.format = swapChainImageFormat;
-      colorAttachment.samples = lthDevice.msaaSamples;
+      colorAttachment.samples = lthDevice.getMsaaSamples();
       colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
       colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-      colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
       colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+      colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
       colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-      colorAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+      colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
       VkAttachmentReference colorAttachmentRef{};
       colorAttachmentRef.attachment = 0;
@@ -224,7 +224,7 @@ namespace lth {
 
       VkAttachmentDescription depthAttachment{};
       depthAttachment.format = swapChainDepthFormat;
-      depthAttachment.samples = lthDevice.msaaSamples;
+      depthAttachment.samples = lthDevice.getMsaaSamples();
       depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
       depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
       depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -236,26 +236,11 @@ namespace lth {
       depthAttachmentRef.attachment = 1;
       depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-      VkAttachmentDescription colorAttachmentResolve{};
-      colorAttachmentResolve.format = swapChainImageFormat;
-      colorAttachmentResolve.samples = VK_SAMPLE_COUNT_1_BIT;
-      colorAttachmentResolve.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-      colorAttachmentResolve.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-      colorAttachmentResolve.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-      colorAttachmentResolve.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-      colorAttachmentResolve.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-      colorAttachmentResolve.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-      VkAttachmentReference colorAttachmentResolveRef{};
-      colorAttachmentResolveRef.attachment = 2;
-      colorAttachmentResolveRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
       VkSubpassDescription subpass{};
       subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
       subpass.colorAttachmentCount = 1;
       subpass.pColorAttachments = &colorAttachmentRef;
       subpass.pDepthStencilAttachment = &depthAttachmentRef;
-      subpass.pResolveAttachments = &colorAttachmentResolveRef;
 
       VkSubpassDependency dependency{};
       dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -268,7 +253,33 @@ namespace lth {
       dependency.dstAccessMask =
           VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
-      std::array<VkAttachmentDescription, 3> attachments = {colorAttachment, depthAttachment, colorAttachmentResolve};
+      std::vector<VkAttachmentDescription> attachments;
+
+      if (lthDevice.isMsaaEnabled()) {
+
+          colorAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+          VkAttachmentDescription colorAttachmentResolve{};
+          colorAttachmentResolve.format = swapChainImageFormat;
+          colorAttachmentResolve.samples = VK_SAMPLE_COUNT_1_BIT;
+          colorAttachmentResolve.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+          colorAttachmentResolve.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+          colorAttachmentResolve.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+          colorAttachmentResolve.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+          colorAttachmentResolve.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+          colorAttachmentResolve.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR; // VK_IMAGE_LAYOUT_PRESENT_SRC_KHR is now on the ImGui render pass, which is the definitive final layout.
+          //colorAttachmentResolve.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; // VK_IMAGE_LAYOUT_PRESENT_SRC_KHR is now on the ImGui render pass, which is the definitive final layout.
+
+          VkAttachmentReference colorAttachmentResolveRef{};
+          colorAttachmentResolveRef.attachment = 2;
+          colorAttachmentResolveRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+        subpass.pResolveAttachments = &colorAttachmentResolveRef;
+
+        attachments = { colorAttachment, depthAttachment, colorAttachmentResolve };
+      } else {
+          attachments = { colorAttachment, depthAttachment };
+      }
       VkRenderPassCreateInfo renderPassInfo = {};
       renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
       renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
@@ -284,27 +295,33 @@ namespace lth {
     }
 
     void LthSwapChain::createFramebuffers() {
-      swapChainFramebuffers.resize(imageCount());
-      for (size_t i = 0; i < imageCount(); i++) {
-        std::array<VkImageView, 3> attachments = { colorImageViews[i], depthImageViews[i], swapChainImageViews[i] };
+        swapChainFramebuffers.resize(imageCount());
+        for (size_t i = 0; i < imageCount(); i++) {
+            std::vector<VkImageView> attachments;
+            if (lthDevice.isMsaaEnabled()) {
+                attachments = { colorImageViews[i], depthImageViews[i], swapChainImageViews[i] };
+            }
+            else {
+                attachments = { swapChainImageViews[i], depthImageViews[i] };
+            }
 
-        VkFramebufferCreateInfo framebufferInfo{};
-        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebufferInfo.renderPass = renderPass;
-        framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-        framebufferInfo.pAttachments = attachments.data();
-        framebufferInfo.width = swapChainExtent.width;
-        framebufferInfo.height = swapChainExtent.height;
-        framebufferInfo.layers = 1;
+            VkFramebufferCreateInfo framebufferInfo{};
+            framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+            framebufferInfo.renderPass = renderPass;
+            framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+            framebufferInfo.pAttachments = attachments.data();
+            framebufferInfo.width = swapChainExtent.width;
+            framebufferInfo.height = swapChainExtent.height;
+            framebufferInfo.layers = 1;
 
-        if (vkCreateFramebuffer(
-            lthDevice.device(),
-            &framebufferInfo,
-            nullptr,
-            &swapChainFramebuffers[i]) != VK_SUCCESS) {
-          throw std::runtime_error("Failed to create framebuffer!");
+            if (vkCreateFramebuffer(
+                lthDevice.device(),
+                &framebufferInfo,
+                nullptr,
+                &swapChainFramebuffers[i]) != VK_SUCCESS) {
+              throw std::runtime_error("Failed to create framebuffer!");
+            }
         }
-      }
     }
 
     void LthSwapChain::createColorResources() {
@@ -324,7 +341,7 @@ namespace lth {
                 colorImages[i],
                 colorImageMemories[i],
                 1,
-                lthDevice.msaaSamples);
+                lthDevice.getMsaaSamples());
             colorImageViews[i] = lthDevice.createImageView(colorImages[i], swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
         }
     }
@@ -346,7 +363,7 @@ namespace lth {
             depthImages[i],
             depthImageMemories[i],
             1,
-            lthDevice.msaaSamples);
+            lthDevice.getMsaaSamples());
 
         depthImageViews[i] = lthDevice.createImageView(depthImages[i], swapChainDepthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
       }
@@ -381,6 +398,7 @@ namespace lth {
         const std::vector<VkSurfaceFormatKHR> &availableFormats) {
       for (const auto &availableFormat : availableFormats) {
         if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB &&
+        //if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM &&
             availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
           return availableFormat;
         }

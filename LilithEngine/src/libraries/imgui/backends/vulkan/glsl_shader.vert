@@ -17,9 +17,18 @@ layout(location = 0) out struct {
     vec2 UV;
 } Out;
 
+vec3 toLinear(vec3 sRGB)
+{
+    bvec3 cutoff = lessThan(sRGB, vec3(0.04045));
+    vec3 higher = pow((sRGB + vec3(0.055))/vec3(1.055), vec3(2.4));
+    vec3 lower = sRGB/vec3(12.92);
+
+    return mix(higher, lower, cutoff);
+}
+
 void main()
 {
-    Out.Color = aColor;
+    Out.Color = vec4(toLinear(aColor.xyz), aColor.a);
     Out.UV = aUV;
     gl_Position = vec4(aPos * pc.uScale + pc.uTranslate, 0, 1);
 }

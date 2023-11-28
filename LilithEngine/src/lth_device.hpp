@@ -3,6 +3,8 @@
 
 #include "lth_window.hpp"
 
+#include "backends/imgui_impl_vulkan.h"
+
 #include <string>
 #include <vector>
 
@@ -33,11 +35,15 @@ namespace lth {
       LthDevice(LthDevice &&) = default;
       LthDevice &operator=(LthDevice &&) = default;
 
+      VkInstance const& getInstance() { return instance; }
       VkCommandPool getCommandPool() { return commandPool; }
       VkDevice device() { return _device; }
       VkSurfaceKHR surface() { return _surface; }
       VkQueue graphicsQueue() { return _graphicsQueue; }
       VkQueue presentQueue() { return _presentQueue; }
+
+      // ImGui methods
+      ImGui_ImplVulkan_InitInfo getImGuiInitInfo(VkDescriptorPool descriptorPool, uint32_t imageCount);
 
       // Swap chain creation methods
       SwapChainSupportDetails getSwapChainSupport() { return querySwapChainSupport(physicalDevice); }
@@ -94,7 +100,8 @@ namespace lth {
           uint32_t mipLevels);
 
       // Properties helper methods
-      VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
+      VkSampleCountFlagBits getMsaaSamples() { return msaaSamples; }
+      bool isMsaaEnabled() { return (msaaSamples != VK_SAMPLE_COUNT_1_BIT); }
       VkPhysicalDeviceProperties physicalDeviceProperties;
 
      private:
@@ -128,6 +135,8 @@ namespace lth {
       VkSurfaceKHR _surface;
       VkQueue _graphicsQueue;
       VkQueue _presentQueue;
+
+      VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
     };
 
 }

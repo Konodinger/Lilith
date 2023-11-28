@@ -12,19 +12,19 @@
 
 namespace lth {
 
-	class PointLightSystem {
+	class LthPointLightSystem {
 	public:
 
-		PointLightSystem(LthDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
-		~PointLightSystem();
+		LthPointLightSystem(LthDevice& device, VkRenderPass renderPass, DescriptorSetLayouts& setLayouts);
+		~LthPointLightSystem();
 
-		PointLightSystem(const PointLightSystem&) = delete;
-		PointLightSystem& operator=(const PointLightSystem&) = delete;
+		LthPointLightSystem(const LthPointLightSystem&) = delete;
+		LthPointLightSystem& operator=(const LthPointLightSystem&) = delete;
 		
 		void update(FrameInfo& frameInfo, GlobalUBO& ubo);
 		void render(FrameInfo &frameInfo);
 	private:
-		void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
+		void createPipelineLayout(DescriptorSetLayouts& setLayouts);
 		void createPipeline(VkRenderPass renderPass);
 
 		LthDevice &lthDevice;

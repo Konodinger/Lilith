@@ -22,7 +22,11 @@ layout(set = 0, binding = 0) uniform GlobalUbo {
 	vec4 ambientLightColor;
 	PointLight pointLights[8];
 	int numLights;
-} ubo;
+} globUbo;
+
+layout(set = 1, binding = 0) uniform GameObjectUbo {
+	bool usesColorTexture;
+} goUbo;
 
 layout(push_constant) uniform Push {
 	vec4 position;
@@ -35,8 +39,8 @@ layout (location = 0) out vec2 fragOffset;
 
 void main() {
 	fragOffset = OFFSETS[gl_VertexIndex];
-	vec4 positionCameraSpace = ubo.viewMatrix * push.position;
+	vec4 positionCameraSpace = globUbo.viewMatrix * push.position;
 	positionCameraSpace.xy += push.radius * fragOffset;
 
-	gl_Position = ubo.projectionMatrix * positionCameraSpace;
+	gl_Position = globUbo.projectionMatrix * positionCameraSpace;
 }

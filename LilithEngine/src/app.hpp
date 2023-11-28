@@ -17,6 +17,7 @@
 
 #define MODELSFOLDERPATH(fileName) "models/" fileName
 #define TEXTURESFOLDERPATH(fileName) "textures/" fileName
+#define IMGUIFONTSFOLDERPATH(fileName) "src/libraries/imgui/misc/fonts/" fileName
 
 namespace lth {
 
@@ -33,6 +34,8 @@ namespace lth {
 
 		static constexpr int WIDTH = 1200;
 		static constexpr int HEIGHT = 800;
+
+		static constexpr uint32_t GLOBALPOOLMAXSETS = 100;
 
 		bool LTH_CONSTANT_UPDATE_DT = true; //This parameters is in caps lock because it could become an enum in the future.
 		static constexpr float MAX_FRAME_TIME = 0.25f;
@@ -52,6 +55,8 @@ namespace lth {
 
 		void loadGameObjects();
 		void loadTextures();
+		void createDescriptorSets();
+		void initImGui();
 
 		void update(float dt);
 
@@ -59,7 +64,11 @@ namespace lth {
 		LthDevice lthDevice{ lthWindow };
 		LthRenderer lthRenderer{ lthWindow, lthDevice };
 
-		std::unique_ptr<LthDescriptorPool> globalPool{};
+		std::unique_ptr<LthDescriptorPool> generalDescriptorPool{};
+		DescriptorSetLayouts setLayouts{};
+		std::vector<std::unique_ptr<LthBuffer>> uboBuffers{};
+		std::vector<VkDescriptorSet> globalDescriptorSets{};
+
 		LthGameObject::Map gameObjects;
 		std::shared_ptr<LthTexture> texture;
 

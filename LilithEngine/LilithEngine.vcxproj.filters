@@ -45,7 +45,7 @@
     <ClCompile Include="src\lth_renderer.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\systems\render_system.cpp">
+    <ClCompile Include="src\systems\lth_render_system.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="src\components\transform.hpp">
@@ -66,7 +66,7 @@
     <ClCompile Include="src\lth_descriptors.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\systems\point_light_system.cpp">
+    <ClCompile Include="src\systems\lth_point_light_system.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="src\gameObjects\lth_game_object.cpp">
@@ -122,7 +122,7 @@
     <ClInclude Include="src\gameObjects\lth_game_object.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="src\systems\render_system.hpp">
+    <ClInclude Include="src\systems\lth_render_system.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="src\lth_camera.hpp">
@@ -140,7 +140,7 @@
     <ClInclude Include="src\lth_descriptors.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="src\systems\point_light_system.hpp">
+    <ClInclude Include="src\systems\lth_point_light_system.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="src\lth_texture.hpp">
@@ -174,6 +174,9 @@
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="src\lth_compile_options.hpp">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="src\systems\lth_system_set.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
   </ItemGroup>

@@ -21,6 +21,8 @@ namespace lth {
 		LthRenderer& operator=(const LthRenderer&) = delete;
 
 		VkRenderPass getSwapChainRenderPass() const { return lthSwapChain->getRenderPass(); }
+		size_t getSwapChainImageCount() const { return lthSwapChain->imageCount(); }
+		VkFormat getSwapChainImageFormat() const { return lthSwapChain->getSwapChainImageFormat(); }
 		float getAspectRatio() const { return lthSwapChain->extentAspectRatio(); }
 		bool isFrameInProgress() const { return isFrameStarted; }
 

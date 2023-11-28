@@ -190,8 +190,8 @@
     <ClCompile Include="src\lth_utils.hpp" />
     <ClCompile Include="src\lth_window.cpp" />
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\systems\point_light_system.cpp" />
-    <ClCompile Include="src\systems\render_system.cpp" />
+    <ClCompile Include="src\systems\lth_point_light_system.cpp" />
+    <ClCompile Include="src\systems\lth_render_system.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\libraries\imgui\backends\imgui_impl_glfw.h" />
@@ -217,8 +217,9 @@
     <ClInclude Include="src\lth_pipeline.hpp" />
     <ClInclude Include="src\lth_swap_chain.hpp" />
     <ClInclude Include="src\lth_window.hpp" />
-    <ClInclude Include="src\systems\point_light_system.hpp" />
-    <ClInclude Include="src\systems\render_system.hpp" />
+    <ClInclude Include="src\systems\lth_system_set.hpp" />
+    <ClInclude Include="src\systems\lth_point_light_system.hpp" />
+    <ClInclude Include="src\systems\lth_render_system.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shadersCompile.bat" />

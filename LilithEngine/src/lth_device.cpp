@@ -34,6 +34,15 @@ namespace lth {
         return VK_FALSE;
     }
 
+    static void checkVkResult(VkResult err)
+    {
+        if (err == 0)
+            return;
+        std::cerr << "[ImGui-Vulkan] Error: VkResult = " << err << std::endl;
+        if (err < 0)
+            abort();
+    }
+
     VkResult CreateDebugUtilsMessengerEXT(
         VkInstance instance,
         const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo,
@@ -69,7 +78,6 @@ namespace lth {
       pickPhysicalDevice();
       createLogicalDevice();
       createCommandPool();
-      getMaxUsableSampleCount();
     }
 
     LthDevice::~LthDevice() {
@@ -155,7 +163,7 @@ namespace lth {
 
       vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
       //std::cout << "Physical device: " << physicalDeviceProperties.deviceName << std::endl;
-      msaaSamples = getMaxUsableSampleCount();
+      //msaaSamples = getMaxUsableSampleCount();
     }
 
     void LthDevice::createLogicalDevice() {
@@ -414,6 +422,24 @@ namespace lth {
         }
       }
       throw std::runtime_error("Failed to find supported format!");
+    }
+
+    ImGui_ImplVulkan_InitInfo LthDevice::getImGuiInitInfo(VkDescriptorPool descriptorPool, uint32_t imageCount) {
+        ImGui_ImplVulkan_InitInfo initInfo{};
+        initInfo.Instance = instance;
+        initInfo.PhysicalDevice = physicalDevice;
+        initInfo.Device = _device;
+        QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
+        assert(queueFamilyIndices.graphicsFamilyHasValue && "Error: could not init ImGui, graphics queue has no family!");
+        initInfo.QueueFamily = queueFamilyIndices.graphicsFamily;
+        initInfo.Queue = _graphicsQueue;
+        initInfo.PipelineCache = VK_NULL_HANDLE;
+        initInfo.DescriptorPool = descriptorPool;
+        initInfo.Allocator = nullptr;
+        initInfo.MinImageCount = imageCount;
+        initInfo.ImageCount = imageCount;
+        initInfo.CheckVkResultFn = checkVkResult;
+        return initInfo;
     }
 
     uint32_t LthDevice::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {

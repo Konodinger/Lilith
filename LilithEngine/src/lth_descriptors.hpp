@@ -10,6 +10,13 @@
 
 namespace lth {
 
+    class LthDescriptorSetLayout;
+
+    struct DescriptorSetLayouts {
+        std::unique_ptr<LthDescriptorSetLayout> globalSetLayout{};
+        std::unique_ptr<LthDescriptorSetLayout> gameObjectSetLayout{};
+    };
+
     class LthDescriptorSetLayout {
     public:
         class Builder {
@@ -75,7 +82,7 @@ namespace lth {
             const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet& descriptor) const;
 
         void freeDescriptors(std::vector<VkDescriptorSet>& descriptors) const;
-
+        VkDescriptorPool getDescriptorPool() { return descriptorPool; }
         void resetPool();
 
     private:

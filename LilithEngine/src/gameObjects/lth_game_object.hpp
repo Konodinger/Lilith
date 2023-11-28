@@ -2,13 +2,19 @@
 #define __LTH_GAME_OBJECT_HPP
 
 #include "../lth_model.hpp"
+#include "../lth_texture.hpp"
 #include "../components/transform.hpp"
+#include "../lth_descriptors.hpp"
 
 #include <memory>
 #include <unordered_map>
 
 namespace lth {
 
+	struct GameObjectUBO {
+		bool usesColorTexture = false;
+	};
+	
 	struct PointLightComponent {
 		float lightIntensity = 1.f;
 		float lightQuadraticAttenuation = 1.f;
@@ -37,17 +43,27 @@ namespace lth {
 		
 		id_t getId() const { return id; }
 
+		void setUsesColorTexture(bool usesColorTexture);
+		void createDescriptorSet(LthDevice &lthDevice,
+			LthDescriptorSetLayout* gameObjectSetLayout,
+			LthDescriptorPool* generalDescriptorPool);
+		void updateUBO(int frameIndex);
+
 		glm::vec3 color{};
 		Transform transform{};
 
 		//Optional, will depend on the nature of the game object.
 		std::shared_ptr<LthModel> model{};
+		std::vector<VkDescriptorSet> gameObjectDescriptorSets{};
+		std::vector<std::unique_ptr<LthBuffer>> uboBuffers{};
 		std::unique_ptr<PointLightComponent> pointLight = nullptr;
 
 	private:
 		LthGameObject(id_t objId) : id{objId} {}
 
 		id_t id;
+		GameObjectUBO ubo{};
+		bool uboSynced = false;
 	};
 }
 

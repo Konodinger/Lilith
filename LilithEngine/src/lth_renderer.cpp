@@ -33,6 +33,9 @@ namespace lth {
 			if (!oldSwapChain->compareSwapFormats(*lthSwapChain.get())) {
 				throw std::runtime_error("Swap chain image (or depth) format has changed!");
 			}
+
+			//ImGui_ImplVulkan_SetMinImageCount(static_cast<uint32_t>(lthSwapChain->imageCount()));
+			//ImGui_ImplVulkanH_CreateWindow ?
 		}
 
 		//To complete.
@@ -80,6 +83,7 @@ namespace lth {
 
 		VkCommandBufferBeginInfo beginInfo{};
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
 		if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to begin recording command buffer" + std::to_string(currentImageIndex) + "!");

@@ -15,18 +15,18 @@
 
 namespace lth {
 
-	class RenderSystem {
+	class LthRenderSystem {
 	public:
 
-		RenderSystem(LthDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
-		~RenderSystem();
+		LthRenderSystem(LthDevice& device, VkRenderPass renderPass, DescriptorSetLayouts& setLayouts);
+		~LthRenderSystem();
 
-		RenderSystem(const RenderSystem&) = delete;
-		RenderSystem& operator=(const RenderSystem&) = delete;
+		LthRenderSystem(const LthRenderSystem&) = delete;
+		LthRenderSystem& operator=(const LthRenderSystem&) = delete;
 		
 		void renderGameObjects(FrameInfo &frameInfo);
 	private:
-		void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
+		void createPipelineLayout(DescriptorSetLayouts& setLayouts);
 		void createPipeline(VkRenderPass renderPass);
 
 		LthDevice &lthDevice;

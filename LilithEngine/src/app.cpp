@@ -1,7 +1,6 @@
 #include "app.hpp"
 
-#include "systems/render_system.hpp"
-#include "systems/point_light_system.hpp"
+#include "systems/lth_system_set.hpp"
 #include "lth_camera.hpp"
 #include "lth_buffer.hpp"
 
@@ -24,62 +23,37 @@ namespace lth {
         cameraController{},
         viewerObject { LthGameObject::createGameObject() },
         startingTime{ std::chrono::high_resolution_clock::now() } {
-        globalPool = LthDescriptorPool::Builder(lthDevice)
-            .setMaxSets(LthSwapChain::MAX_FRAMES_IN_FLIGHT)
-            .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, LthSwapChain::MAX_FRAMES_IN_FLIGHT)
-            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, LthSwapChain::MAX_FRAMES_IN_FLIGHT)
+
+        assert(GLOBALPOOLMAXSETS >= LthSwapChain::MAX_FRAMES_IN_FLIGHT * 2 && "Error: globalPool default size is too small for the swap chain.");
+        generalDescriptorPool = LthDescriptorPool::Builder(lthDevice)
+            .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, GLOBALPOOLMAXSETS)
+            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, GLOBALPOOLMAXSETS)
+            .setMaxSets(GLOBALPOOLMAXSETS)
+            .setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
             .build();
         
         loadTextures();
 		loadGameObjects();
 
-        IMGUI_CHECKVERSION();
-        ImGui::CreateContext();
+        initImGui();
 	}
 
 	App::~App() {
+        ImGui_ImplVulkan_Shutdown();
+        ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
     }
 
 	void App::run() {
 
-        std::vector<std::unique_ptr<LthBuffer>> uboBuffers(LthSwapChain::MAX_FRAMES_IN_FLIGHT);
-        for (int i = 0; i < uboBuffers.size(); ++i) {
-            uboBuffers[i] = std::make_unique<LthBuffer>(
-                lthDevice,
-                sizeof(GlobalUBO),
-                1,
-                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-            uboBuffers[i]->map();
-        }
+        createDescriptorSets();
 
-        auto globalSetLayout = LthDescriptorSetLayout::Builder(lthDevice)
-            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
-            .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
-            .build();
-
-        std::vector<VkDescriptorSet> globalDescriptorSets(LthSwapChain::MAX_FRAMES_IN_FLIGHT);
-        for (int i = 0; i < globalDescriptorSets.size(); ++i) {
-            VkDescriptorBufferInfo bufferInfo = uboBuffers[i]->descriptorInfo();
-            VkDescriptorImageInfo imageInfo = texture->imageInfo();
-            LthDescriptorWriter(*globalSetLayout, *globalPool)
-                .writeBuffer(0, &bufferInfo)
-                .writeImage(1, &imageInfo)
-                .build(globalDescriptorSets[i]);
-        }
-
-		RenderSystem renderSystem{
+        LthSystemSet systemSet{
             lthDevice,
             lthRenderer.getSwapChainRenderPass(),
-            globalSetLayout->getDescriptorSetLayout()
+            setLayouts
         };
 
-        PointLightSystem pointLightSystem{
-            lthDevice,
-            lthRenderer.getSwapChainRenderPass(),
-            globalSetLayout->getDescriptorSetLayout()
-        };
         LthCamera camera{};
         viewerObject.transform.setTranslation({ 0.f, -0.5f, -1.f });
 
@@ -112,12 +86,15 @@ namespace lth {
                 }
             }
 
-            std::cout << viewerObject.transform.getTranslation().x << " " << viewerObject.transform.getTranslation().y << " " << viewerObject.transform.getTranslation().z << std::endl;
             camera.setViewQuat(viewerObject.transform.getTranslation(), viewerObject.transform.getRotationMatrix());
             float aspect = lthRenderer.getAspectRatio(); // Might change when the window is resized.
             camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 1000.f);
 
+
 			if (auto commandBuffer = lthRenderer.beginFrame()) {
+
+                // Get the current frame.
+
                 int frameIndex = lthRenderer.getFrameIndex();
                 FrameInfo frameInfo{
                     frameIndex,
@@ -133,18 +110,37 @@ namespace lth {
                 ubo.projectionMatrix = camera.getProjection();
                 ubo.viewMatrix = camera.getView();
                 ubo.inverseViewMatrix = camera.getInverseView();
-                pointLightSystem.update(frameInfo, ubo);
+                systemSet.pointLightSystem.update(frameInfo, ubo);
                 uboBuffers[frameIndex]->writeToBuffer(&ubo);
                 uboBuffers[frameIndex]->flush();
 
+                for (auto& keyValue : gameObjects) {
+                    auto& obj = keyValue.second;
+                    obj.updateUBO(frameIndex);
+                }
+
                 // Render the scene.
+
 				lthRenderer.beginSwapChainRenderPass(commandBuffer);
-				renderSystem.renderGameObjects(frameInfo);
-                pointLightSystem.render(frameInfo);
+                systemSet.renderSystem.renderGameObjects(frameInfo);
+                systemSet.pointLightSystem.render(frameInfo);
+
+                // Render the UI.
+
+                ImGui_ImplVulkan_NewFrame();
+                ImGui_ImplGlfw_NewFrame();
+                ImGui::NewFrame();
+                ImGui::ShowDemoWindow();
+                ImGui::Render();
+                ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer, nullptr);
+
+
+                // End render pass.
+
 				lthRenderer.endSwapChainRenderPass(commandBuffer);
 				lthRenderer.endFrame();
 			}
-		}
+        }
 
 		vkDeviceWaitIdle(lthDevice.device());
 	}
@@ -185,13 +181,31 @@ namespace lth {
         gameObjects.emplace(floor.getId(), std::move(floor));
 
         lthModel = LthModel::createModelFromFile(lthDevice, MODELSFOLDERPATH("viking_room.obj"));
+        //std::shared_ptr<LthTexture> lthTexture = LthTexture::createTextureFromFile(lthDevice, TEXTURESFOLDERPATH("viking_room.png"), true);
 
         auto viking_room = LthGameObject::createGameObject();
         viking_room.model = lthModel;
+        //viking_room.texture = texture;
+        viking_room.setUsesColorTexture(true);
         viking_room.transform.setTranslation({ 0.f, 0.f, 5.f });
-        viking_room.transform.setScale({ 1.f, 1.f, 1.f });
 
         gameObjects.emplace(viking_room.getId(), std::move(viking_room));
+
+        lthModel = LthModel::createModelFromFile(lthDevice, MODELSFOLDERPATH("bokoblin.obj"));
+
+        auto bokoblin = LthGameObject::createGameObject();
+        bokoblin.model = lthModel;
+        bokoblin.transform.setTranslation({ 5.f, 0.f, 0.f });
+
+        gameObjects.emplace(bokoblin.getId(), std::move(bokoblin));
+
+        lthModel = LthModel::createModelFromFile(lthDevice, MODELSFOLDERPATH("Falco.obj"));
+
+        auto falco = LthGameObject::createGameObject();
+        falco.model = lthModel;
+        falco.transform.setTranslation({ -5.f, 0.f, 0.f });
+
+        gameObjects.emplace(falco.getId(), std::move(falco));
 
         //Point lights
         std::vector<glm::vec3> lightColors{
@@ -217,6 +231,67 @@ namespace lth {
 	}
 
     void App::loadTextures() {
-        texture = LthTexture::createTextureFromFile(lthDevice, TEXTURESFOLDERPATH("viking_room.png"), true);
+        texture = LthTexture::createTextureFromFile(lthDevice, TEXTURESFOLDERPATH("Bokoblin_Curse_Body_Alb.png"), true);
+    }
+
+    void App::createDescriptorSets() {
+        setLayouts.globalSetLayout = LthDescriptorSetLayout::Builder(lthDevice)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
+            .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+            .build();
+
+        setLayouts.gameObjectSetLayout = LthDescriptorSetLayout::Builder(lthDevice)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
+            .build();
+
+        uboBuffers.resize(LthSwapChain::MAX_FRAMES_IN_FLIGHT);
+        for (int i = 0; i < uboBuffers.size(); ++i) {
+            uboBuffers[i] = std::make_unique<LthBuffer>(
+                lthDevice,
+                sizeof(GlobalUBO),
+                1,
+                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+            uboBuffers[i]->map();
+        }
+
+        globalDescriptorSets.resize(LthSwapChain::MAX_FRAMES_IN_FLIGHT);
+        for (int i = 0; i < globalDescriptorSets.size(); ++i) {
+            VkDescriptorBufferInfo bufferInfo = uboBuffers[i]->descriptorInfo();
+            VkDescriptorImageInfo imageInfo = texture->imageInfo();
+            LthDescriptorWriter(*setLayouts.globalSetLayout, *generalDescriptorPool)
+                .writeBuffer(0, &bufferInfo)
+                .writeImage(1, &imageInfo)
+                .build(globalDescriptorSets[i]);
+        }
+
+
+
+        for (auto& keyValue : gameObjects) {
+            auto& obj = keyValue.second;
+            obj.createDescriptorSet(lthDevice, setLayouts.gameObjectSetLayout.get(), generalDescriptorPool.get());
+        }
+    }
+
+    void App::initImGui() {
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGuiIO& io = ImGui::GetIO(); (void)io;
+
+        ImGui::StyleColorsClassic();
+
+        ImFontConfig fontConfig;
+        fontConfig.FontDataOwnedByAtlas = false;
+        ImFont* robotoFont = io.Fonts->AddFontFromFileTTF(IMGUIFONTSFOLDERPATH("ProggyClean.ttf"), 15.f);
+        io.FontDefault = robotoFont;
+
+        ImGui_ImplGlfw_InitForVulkan(lthWindow.getGLFWwindow(), true);
+
+        ImGui_ImplVulkan_InitInfo initInfo = lthDevice.getImGuiInitInfo(generalDescriptorPool->getDescriptorPool(), static_cast<uint32_t>(lthRenderer.getSwapChainImageCount()));
+        ImGui_ImplVulkan_Init(&initInfo, lthRenderer.getSwapChainRenderPass());
+
+
+        ImGui_ImplVulkan_CreateFontsTexture();
+        ImGui_ImplVulkan_DestroyFontsTexture();
     }
 }
