@@ -36,6 +36,7 @@ namespace lth {
 		static constexpr int HEIGHT = 800;
 
 		static constexpr uint32_t GLOBALPOOLMAXSETS = 100;
+		static constexpr uint32_t TEXTUREARRAYSIZE = 10;
 
 		bool LTH_CONSTANT_UPDATE_DT = true; //This parameters is in caps lock because it could become an enum in the future.
 		static constexpr float MAX_FRAME_TIME = 0.25f;
@@ -49,6 +50,7 @@ namespace lth {
 		App& operator=(const App&) = delete;
 
 		void run();
+		uint32_t loadTexture(const std::string& textureName);
 		inline float getAppTimer() { return std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startingTime).count(); };
 
 	private:
@@ -70,9 +72,11 @@ namespace lth {
 		std::vector<VkDescriptorSet> globalDescriptorSets{};
 
 		LthGameObject::Map gameObjects;
-		std::shared_ptr<LthTexture> texture;
 
-		//TODO : add a camera game object;
+		std::vector<std::unique_ptr<LthTexture>> textureArray{};
+		uint32_t textureArrayCount = 0;
+		std::unique_ptr<LthTexture> defaultTexture;
+
 		KeyboardMovementController cameraController;
 		LthGameObject viewerObject;
 

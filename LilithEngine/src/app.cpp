@@ -175,6 +175,8 @@ namespace lth {
 
         auto floor = LthGameObject::createGameObject();
         floor.model = lthModel;
+        floor.setUsesColorTexture(true);
+        floor.setTextureId(1);
         floor.transform.setTranslation({ 0.f, 0.f, 0.f });
         floor.transform.setScale({ 3.f, 3.f, 3.f});
 
@@ -185,27 +187,12 @@ namespace lth {
 
         auto viking_room = LthGameObject::createGameObject();
         viking_room.model = lthModel;
-        //viking_room.texture = texture;
+        // viking_room.texture = texture;
         viking_room.setUsesColorTexture(true);
+        viking_room.setTextureId(0);
         viking_room.transform.setTranslation({ 0.f, 0.f, 5.f });
 
         gameObjects.emplace(viking_room.getId(), std::move(viking_room));
-
-        lthModel = LthModel::createModelFromFile(lthDevice, MODELSFOLDERPATH("bokoblin.obj"));
-
-        auto bokoblin = LthGameObject::createGameObject();
-        bokoblin.model = lthModel;
-        bokoblin.transform.setTranslation({ 5.f, 0.f, 0.f });
-
-        gameObjects.emplace(bokoblin.getId(), std::move(bokoblin));
-
-        lthModel = LthModel::createModelFromFile(lthDevice, MODELSFOLDERPATH("Falco.obj"));
-
-        auto falco = LthGameObject::createGameObject();
-        falco.model = lthModel;
-        falco.transform.setTranslation({ -5.f, 0.f, 0.f });
-
-        gameObjects.emplace(falco.getId(), std::move(falco));
 
         //Point lights
         std::vector<glm::vec3> lightColors{
@@ -230,14 +217,33 @@ namespace lth {
         }
 	}
 
+    uint32_t App::loadTexture(const std::string& textureName) {
+        if (textureArrayCount >= textureArray.size()) {
+            // In the future, may try to resize the texture array and the global descriptor set.
+            std::cerr << "Error: texture array max size is already reached. Can't load any more texture." << std::endl;
+
+            /*textureArray.resize(textureArray.size() + TEXTUREARRAYSIZE);
+            std::cout << "The texture array is too short. Resizing to " << textureArray.size() << "..." << std::endl;
+            assert(textureArray.size() < GLOBALPOOLMAXSETS && "Error: the texture array is too big and may not be handled correctly by the descriptor pool.");*/
+        }
+        textureArray[textureArrayCount++] = LthTexture::createTextureFromFile(lthDevice, "textures/" + textureName, true);
+        return textureArrayCount;
+
+    }
+
     void App::loadTextures() {
-        texture = LthTexture::createTextureFromFile(lthDevice, TEXTURESFOLDERPATH("Bokoblin_Curse_Body_Alb.png"), true);
+        defaultTexture = LthTexture::createTextureFromFile(lthDevice, TEXTURESFOLDERPATH("white_pixel.png"), false);
+        assert(TEXTUREARRAYSIZE < GLOBALPOOLMAXSETS && "Error: the texture array is too big and may not be handled correctly by the descriptor pool.");
+        textureArray.resize(TEXTUREARRAYSIZE);
+
+        loadTexture("viking_room.png");
+        loadTexture("Circuitry Albedo.bmp");
     }
 
     void App::createDescriptorSets() {
         setLayouts.globalSetLayout = LthDescriptorSetLayout::Builder(lthDevice)
             .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
-            .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+            .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, TEXTUREARRAYSIZE)
             .build();
 
         setLayouts.gameObjectSetLayout = LthDescriptorSetLayout::Builder(lthDevice)
@@ -255,13 +261,20 @@ namespace lth {
             uboBuffers[i]->map();
         }
 
+        std::vector<VkDescriptorImageInfo> descriptorImagesInfo{};
+        for (int i = 0; i < TEXTUREARRAYSIZE; ++i) {
+            descriptorImagesInfo.push_back(
+                (textureArray[i] == nullptr) ?
+                defaultTexture->imageInfo() :
+                    textureArray[i]->imageInfo());
+        }
+
         globalDescriptorSets.resize(LthSwapChain::MAX_FRAMES_IN_FLIGHT);
         for (int i = 0; i < globalDescriptorSets.size(); ++i) {
             VkDescriptorBufferInfo bufferInfo = uboBuffers[i]->descriptorInfo();
-            VkDescriptorImageInfo imageInfo = texture->imageInfo();
             LthDescriptorWriter(*setLayouts.globalSetLayout, *generalDescriptorPool)
                 .writeBuffer(0, &bufferInfo)
-                .writeImage(1, &imageInfo)
+                .writeImage(1, descriptorImagesInfo.data(), TEXTUREARRAYSIZE)
                 .build(globalDescriptorSets[i]);
         }
 

@@ -158,21 +158,23 @@ namespace lth {
     }
 
     LthDescriptorWriter& LthDescriptorWriter::writeImage(
-        uint32_t binding, VkDescriptorImageInfo* imageInfo) {
+        uint32_t binding,
+        VkDescriptorImageInfo* imageInfo,
+        uint32_t count) {
         assert(setLayout.bindings.count(binding) == 1 && "Layout does not contain specified binding!");
 
         auto& bindingDescription = setLayout.bindings[binding];
 
-        assert(
+        /*assert(
             bindingDescription.descriptorCount == 1 &&
-            "Binding single descriptor info, but binding expects multiple!");
+            "Binding single descriptor info, but binding expects multiple!");*/
 
         VkWriteDescriptorSet write{};
         write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         write.descriptorType = bindingDescription.descriptorType;
         write.dstBinding = binding;
         write.pImageInfo = imageInfo;
-        write.descriptorCount = 1;
+        write.descriptorCount = count;
 
         writes.push_back(write);
         return *this;

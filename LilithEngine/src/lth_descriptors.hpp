@@ -97,7 +97,7 @@ namespace lth {
         LthDescriptorWriter(LthDescriptorSetLayout& setLayout, LthDescriptorPool& pool);
 
         LthDescriptorWriter& writeBuffer(uint32_t binding, VkDescriptorBufferInfo* bufferInfo);
-        LthDescriptorWriter& writeImage(uint32_t binding, VkDescriptorImageInfo* imageInfo);
+        LthDescriptorWriter& writeImage(uint32_t binding, VkDescriptorImageInfo* imageInfo, uint32_t count = 1);
 
         bool build(VkDescriptorSet& set);
         void overwrite(VkDescriptorSet& set);

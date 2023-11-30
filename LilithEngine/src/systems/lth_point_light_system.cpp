@@ -129,6 +129,18 @@ namespace lth {
 				sizeof(PointLightPushConstants),
 				&push
 			);
+
+			vkCmdBindDescriptorSets(
+				frameInfo.commandBuffer,
+				VK_PIPELINE_BIND_POINT_GRAPHICS,
+				pipelineLayout,
+				1,
+				1,
+				&obj.gameObjectDescriptorSets[frameInfo.frameIndex],
+				0,
+				nullptr);
+
+
 			vkCmdDraw(frameInfo.commandBuffer, 6, 1, 0, 0);
 		}
 

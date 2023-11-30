@@ -12,7 +12,8 @@
 namespace lth {
 
 	struct GameObjectUBO {
-		bool usesColorTexture = false;
+		alignas(4) bool usesColorTexture = false;
+		int textureId = 0;
 	};
 	
 	struct PointLightComponent {
@@ -44,6 +45,7 @@ namespace lth {
 		id_t getId() const { return id; }
 
 		void setUsesColorTexture(bool usesColorTexture);
+		void setTextureId(int textureId) { ubo.textureId = textureId; }
 		void createDescriptorSet(LthDevice &lthDevice,
 			LthDescriptorSetLayout* gameObjectSetLayout,
 			LthDescriptorPool* generalDescriptorPool);
@@ -55,7 +57,7 @@ namespace lth {
 		//Optional, will depend on the nature of the game object.
 		std::shared_ptr<LthModel> model{};
 		std::vector<VkDescriptorSet> gameObjectDescriptorSets{};
-		std::vector<std::unique_ptr<LthBuffer>> uboBuffers{};
+		std::vector<std::unique_ptr<LthBuffer>> gameObjectUboBuffers{};
 		std::unique_ptr<PointLightComponent> pointLight = nullptr;
 
 	private:
@@ -63,7 +65,6 @@ namespace lth {
 
 		id_t id;
 		GameObjectUBO ubo{};
-		bool uboSynced = false;
 	};
 }
 

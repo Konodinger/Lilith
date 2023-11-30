@@ -5,7 +5,7 @@ layout (location = 1) in vec3 fragColor;
 layout (location = 2) in vec3 fragNormalWorld;
 layout (location = 3) in vec2 fragTexCoord;
 
-layout (binding = 1) uniform sampler2D texSampler;
+layout (binding = 1) uniform sampler2D texSampler[10];
 
 struct PointLight {
 	vec3 position;
@@ -24,6 +24,7 @@ layout(set = 0, binding = 0) uniform GlobalUbo {
 
 layout(set = 1, binding = 0) uniform GameObjectUbo {
 	bool usesColorTexture;
+	int textureId;
 } goUbo;
 
 layout(push_constant) uniform Push {
@@ -37,7 +38,7 @@ layout (location = 0) out vec4 outColor;
 void main() {
 	vec3 albedo;
 	if (goUbo.usesColorTexture) {
-		albedo = texture(texSampler, fragTexCoord).xyz;
+		albedo = texture(texSampler[goUbo.textureId], fragTexCoord).xyz;
 	} else {
 		albedo = fragColor;
 	}

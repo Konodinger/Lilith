@@ -1,6 +1,7 @@
 #include "lth_game_object.hpp"
 
 #include "../lth_swap_chain.hpp"
+#include <iostream>
 
 namespace lth {
 
@@ -15,26 +16,25 @@ namespace lth {
 
 	void LthGameObject::setUsesColorTexture(bool usesColorTexture) {
 		ubo.usesColorTexture = usesColorTexture;
-		uboSynced = false;
 	}
 
 	void LthGameObject::createDescriptorSet(LthDevice &lthDevice,
         LthDescriptorSetLayout* gameObjectSetLayout,
         LthDescriptorPool* generalDescriptorPool) {
-        uboBuffers.resize(LthSwapChain::MAX_FRAMES_IN_FLIGHT);
-        for (int i = 0; i < uboBuffers.size(); ++i) {
-            uboBuffers[i] = std::make_unique<LthBuffer>(
+        gameObjectUboBuffers.resize(LthSwapChain::MAX_FRAMES_IN_FLIGHT);
+        for (int i = 0; i < gameObjectUboBuffers.size(); ++i) {
+            gameObjectUboBuffers[i] = std::make_unique<LthBuffer>(
                 lthDevice,
                 sizeof(GameObjectUBO),
                 1,
                 VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-            uboBuffers[i]->map();
+            gameObjectUboBuffers[i]->map();
         }
 
         gameObjectDescriptorSets.resize(LthSwapChain::MAX_FRAMES_IN_FLIGHT);
         for (int i = 0; i < gameObjectDescriptorSets.size(); ++i) {
-            VkDescriptorBufferInfo bufferInfo = uboBuffers[i]->descriptorInfo();
+            VkDescriptorBufferInfo bufferInfo = gameObjectUboBuffers[i]->descriptorInfo();
             LthDescriptorWriter(*gameObjectSetLayout, *generalDescriptorPool)
                 .writeBuffer(0, &bufferInfo)
                 .build(gameObjectDescriptorSets[i]);
@@ -47,7 +47,7 @@ namespace lth {
         // No update for now.
         //
 
-        uboBuffers[frameIndex]->writeToBuffer(&ubo);
-        uboBuffers[frameIndex]->flush();
+        gameObjectUboBuffers[frameIndex]->writeToBuffer(&ubo);
+        gameObjectUboBuffers[frameIndex]->flush();
     }
 }
