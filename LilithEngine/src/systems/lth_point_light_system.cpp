@@ -1,14 +1,9 @@
 #include "lth_point_light_system.hpp"
 
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 
 #include <cassert>
-#include <stdexcept>
-#include <array>
-#include <iostream>
 #include <map>
 
 namespace lth {
@@ -23,38 +18,22 @@ namespace lth {
 		LthDevice& device,
 		VkRenderPass renderPass,
 		DescriptorSetLayouts& setLayouts)
-		: lthDevice{ device } {
-		createPipelineLayout(setLayouts);
-		createPipeline(renderPass);
-	}
-
-	LthPointLightSystem::~LthPointLightSystem() {
-		vkDestroyPipelineLayout(lthDevice.device(), pipelineLayout, nullptr);
-	}
-
-	void LthPointLightSystem::createPipelineLayout(DescriptorSetLayouts& setLayouts) {
-
+		: LthGraphicsSystem(device, renderPass, setLayouts) {
 		VkPushConstantRange pushConstantRange{};
 		pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 		pushConstantRange.offset = 0;
 		pushConstantRange.size = sizeof(PointLightPushConstants);
 
 		std::vector<VkDescriptorSetLayout> descriptorSetLayouts{ setLayouts.globalSetLayout->getDescriptorSetLayout(),
-																setLayouts.gameObjectSetLayout->getDescriptorSetLayout()};
-
-		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
-		pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
-		pipelineLayoutInfo.pushConstantRangeCount = 1;
-		pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
-		if (vkCreatePipelineLayout(lthDevice.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
-			throw std::runtime_error("Failed to create pipeline layout!");
-		}
+																setLayouts.gameObjectSetLayout->getDescriptorSetLayout() };
+		createPipelineLayout(&graphicsPipelineLayout,
+			descriptorSetLayouts,
+			{ pushConstantRange });
+		createPipeline(renderPass);
 	}
 
 	void LthPointLightSystem::createPipeline(VkRenderPass renderPass) {
-		assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout!");
+		assert(graphicsPipelineLayout != nullptr && "Cannot create pipeline before pipeline layout!");
 
 		LthGraphicsPipelineConfigInfo pipelineConfig{};
 		LthGraphicsPipeline::defaultGraphicsPipelineConfigInfo(pipelineConfig);
@@ -62,13 +41,13 @@ namespace lth {
 		pipelineConfig.bindingDescriptions.clear();
 		pipelineConfig.attributeDescriptions.clear();
 		pipelineConfig.renderPass = renderPass;
-		pipelineConfig.pipelineLayout = pipelineLayout;
+		pipelineConfig.pipelineLayout = graphicsPipelineLayout;
 		pipelineConfig.multisampleInfo.rasterizationSamples = lthDevice.getMsaaSamples();
 		lthGraphicsPipeline = std::make_unique<LthGraphicsPipeline>(
 			lthDevice,
 			pipelineConfig,
-			"shaders/pointLight.vert.spv",
-			"shaders/pointLight.frag.spv");
+			vertexShaderSpvPath,
+			fragmentShaderSpvPath);
 	}
 
 	void LthPointLightSystem::update(FrameInfo& frameInfo, GlobalUBO& ubo) {
@@ -100,12 +79,12 @@ namespace lth {
 			sorted[distSquared] = obj.getId();
 		}
 
-		lthGraphicsPipeline->bind(frameInfo.commandBuffer);
+		lthGraphicsPipeline->bind(frameInfo.graphicsCommandBuffer);
 
 		vkCmdBindDescriptorSets(
-			frameInfo.commandBuffer,
+			frameInfo.graphicsCommandBuffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			pipelineLayout,
+			graphicsPipelineLayout,
 			0,
 			1,
 			&frameInfo.globalDescriptorSet,
@@ -122,8 +101,8 @@ namespace lth {
 			push.radius = obj.transform.getScale().x;
 
 			vkCmdPushConstants(
-				frameInfo.commandBuffer,
-				pipelineLayout,
+				frameInfo.graphicsCommandBuffer,
+				graphicsPipelineLayout,
 				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 				0,
 				sizeof(PointLightPushConstants),
@@ -131,17 +110,16 @@ namespace lth {
 			);
 
 			vkCmdBindDescriptorSets(
-				frameInfo.commandBuffer,
+				frameInfo.graphicsCommandBuffer,
 				VK_PIPELINE_BIND_POINT_GRAPHICS,
-				pipelineLayout,
+				graphicsPipelineLayout,
 				1,
 				1,
 				&obj.gameObjectDescriptorSets[frameInfo.frameIndex],
 				0,
 				nullptr);
 
-
-			vkCmdDraw(frameInfo.commandBuffer, 6, 1, 0, 0);
+			vkCmdDraw(frameInfo.graphicsCommandBuffer, 6, 1, 0, 0);
 		}
 
 	}

@@ -3,6 +3,7 @@
 #include "systems/lth_system_set.hpp"
 #include "lth_camera.hpp"
 #include "lth_buffer.hpp"
+#include "lth_utils.hpp"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -24,10 +25,11 @@ namespace lth {
         viewerObject { LthGameObject::createGameObject() },
         startingTime{ std::chrono::high_resolution_clock::now() } {
 
-        assert(GLOBALPOOLMAXSETS >= LthSwapChain::MAX_FRAMES_IN_FLIGHT * 2 && "Error: globalPool default size is too small for the swap chain.");
+        assert(GLOBALPOOLMAXSETS >= MAX_FRAMES_IN_FLIGHT && "Error: globalPool default size is too small for the swap chain.");
         generalDescriptorPool = LthDescriptorPool::Builder(lthDevice)
             .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, GLOBALPOOLMAXSETS)
             .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, GLOBALPOOLMAXSETS)
+            .addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, MAX_FRAMES_IN_FLIGHT * 3)
             .setMaxSets(GLOBALPOOLMAXSETS)
             .setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
             .build();
@@ -51,7 +53,8 @@ namespace lth {
         LthSystemSet systemSet{
             lthDevice,
             lthRenderer.getSwapChainRenderPass(),
-            setLayouts
+            setLayouts,
+            cboBuffers
         };
 
         LthCamera camera{};
@@ -66,15 +69,15 @@ namespace lth {
             float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
             currentTime = newTime;
 
-            if (update_delta_time_mode == LTH_UPDATE_DT_MODE_CONSTANT_DT_ONE_CALL) {
+            if (UPDATE_DELTA_TIME_MODE == LTH_UPDATE_DT_MODE_CONSTANT_DT_ONE_CALL) {
                 update(UPDATE_DT);
             } else {
 
-                if (update_delta_time_mode == LTH_UPDATE_DT_MODE_ADAPTIVE_DT_CAPPED || update_delta_time_mode == LTH_UPDATE_DT_MODE_CONSTANT_DT_MULTIPLE_CALL_CAPPED) {
+                if (UPDATE_DELTA_TIME_MODE == LTH_UPDATE_DT_MODE_ADAPTIVE_DT_CAPPED || UPDATE_DELTA_TIME_MODE == LTH_UPDATE_DT_MODE_CONSTANT_DT_MULTIPLE_CALL_CAPPED) {
                     frameTime = glm::min(frameTime, MAX_FRAME_TIME);
                 }
 
-                if (update_delta_time_mode == LTH_UPDATE_DT_MODE_ADAPTIVE_DT || update_delta_time_mode == LTH_UPDATE_DT_MODE_ADAPTIVE_DT_CAPPED) {
+                if (UPDATE_DELTA_TIME_MODE == LTH_UPDATE_DT_MODE_ADAPTIVE_DT || UPDATE_DELTA_TIME_MODE == LTH_UPDATE_DT_MODE_ADAPTIVE_DT_CAPPED) {
                     update(frameTime);
                 } else {
                     frameTimeAccumulator += frameTime;
@@ -91,15 +94,18 @@ namespace lth {
             camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 1000.f);
 
 
-			if (auto commandBuffer = lthRenderer.beginFrame()) {
-
+			if (lthRenderer.beginFrame()) {
+                
                 // Get the current frame.
+                VkCommandBuffer graphicsCommandBuffer = lthRenderer.getCurrentGraphicsCommandBuffer();
+                VkCommandBuffer computeCommandBuffer = lthRenderer.getCurrentComputeCommandBuffer();
 
                 int frameIndex = lthRenderer.getFrameIndex();
                 FrameInfo frameInfo{
                     frameIndex,
                     frameTime,
-                    commandBuffer,
+                    graphicsCommandBuffer,
+                    computeCommandBuffer,
                     camera,
                     globalDescriptorSets[frameIndex],
                     gameObjects
@@ -119,11 +125,18 @@ namespace lth {
                     obj.updateUBO(frameIndex);
                 }
 
+                // Dispatch the compute work.
+
+                lthRenderer.beginComputes();
+                systemSet.particleSystem.dispatch(frameInfo, computeDescriptorSets[frameIndex]);
+                lthRenderer.endComputes();
+
                 // Render the scene.
 
-				lthRenderer.beginSwapChainRenderPass(commandBuffer);
-                systemSet.renderSystem.renderGameObjects(frameInfo);
+				lthRenderer.beginSwapChainRenderPass(graphicsCommandBuffer);
+                systemSet.renderSystem.render(frameInfo);
                 systemSet.pointLightSystem.render(frameInfo);
+                systemSet.particleSystem.render(frameInfo);
 
                 // Render the UI.
 
@@ -132,12 +145,12 @@ namespace lth {
                 ImGui::NewFrame();
                 ImGui::ShowDemoWindow();
                 ImGui::Render();
-                ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer, nullptr);
+                ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), graphicsCommandBuffer, nullptr);
 
 
                 // End render pass.
 
-				lthRenderer.endSwapChainRenderPass(commandBuffer);
+				lthRenderer.endSwapChainRenderPass(graphicsCommandBuffer);
 				lthRenderer.endFrame();
 			}
         }
@@ -210,7 +223,7 @@ namespace lth {
             pointLight.color = lightColors[i];
             auto rotateLight = glm::rotate(
                 glm::mat4(1.f),
-                (i * glm::two_pi<float>()) / lightColors.size(),
+                (i * TWO_PI) / lightColors.size(),
                 { 0.f, -1.f, 0.f });
             pointLight.transform.setTranslation(glm::vec3(rotateLight * glm::vec4(-1.f, -1.f, -1.f, 1.f)));
             gameObjects.emplace(pointLight.getId(), std::move(pointLight));
@@ -250,7 +263,16 @@ namespace lth {
             .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
             .build();
 
-        uboBuffers.resize(LthSwapChain::MAX_FRAMES_IN_FLIGHT);
+        setLayouts.computeSetLayout = LthDescriptorSetLayout::Builder(lthDevice)
+            //.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT)
+            .addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT)
+            .build();
+
+
+        // General descriptor sets.
+
+        uboBuffers.resize(MAX_FRAMES_IN_FLIGHT);
         for (int i = 0; i < uboBuffers.size(); ++i) {
             uboBuffers[i] = std::make_unique<LthBuffer>(
                 lthDevice,
@@ -269,7 +291,7 @@ namespace lth {
                     textureArray[i]->imageInfo());
         }
 
-        globalDescriptorSets.resize(LthSwapChain::MAX_FRAMES_IN_FLIGHT);
+        globalDescriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
         for (int i = 0; i < globalDescriptorSets.size(); ++i) {
             VkDescriptorBufferInfo bufferInfo = uboBuffers[i]->descriptorInfo();
             LthDescriptorWriter(*setLayouts.globalSetLayout, *generalDescriptorPool)
@@ -278,7 +300,26 @@ namespace lth {
                 .build(globalDescriptorSets[i]);
         }
 
+        // Compute shaders descriptor sets.
 
+        LthParticleSystem::createStorageBuffer(lthDevice, cboBuffers);
+
+
+
+        computeDescriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
+        for (int i = 0; i < computeDescriptorSets.size(); ++i) {
+            //VkDescriptorBufferInfo uniformBufferInfo = uboBuffers[i]->descriptorInfo();
+            VkDescriptorBufferInfo storageBufferInfoCurrentFrame = cboBuffers[i]->descriptorInfo();
+            VkDescriptorBufferInfo storageBufferInfoLastFrame = cboBuffers[(i + MAX_FRAMES_IN_FLIGHT - 1) % MAX_FRAMES_IN_FLIGHT]->descriptorInfo();
+            LthDescriptorWriter(*setLayouts.computeSetLayout, *generalDescriptorPool)
+                //.writeBuffer(0, &uniformBufferInfo)
+                .writeBuffer(0, &storageBufferInfoLastFrame)
+                .writeBuffer(1, &storageBufferInfoCurrentFrame)
+                .build(computeDescriptorSets[i]);
+        }
+
+
+        // Game objects descriptor sets.
 
         for (auto& keyValue : gameObjects) {
             auto& obj = keyValue.second;

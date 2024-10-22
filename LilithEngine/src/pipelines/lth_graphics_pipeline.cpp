@@ -1,5 +1,5 @@
 #include "lth_graphics_pipeline.hpp"
-#include "lth_model.hpp"
+#include "../lth_model.hpp"
 
 #include <fstream>
 #include <stdexcept>

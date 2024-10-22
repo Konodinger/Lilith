@@ -3,16 +3,22 @@
 
 #include "lth_render_system.hpp"
 #include "lth_point_light_system.hpp"
+#include "lth_particle_system.hpp"
 
 namespace lth {
 
 	struct LthSystemSet {
 		LthRenderSystem renderSystem;
 		LthPointLightSystem pointLightSystem;
+		LthParticleSystem particleSystem;
 
-		LthSystemSet(LthDevice& device, VkRenderPass renderPass, DescriptorSetLayouts& setLayouts) :
+		LthSystemSet(LthDevice& device,
+			VkRenderPass renderPass,
+			DescriptorSetLayouts& setLayouts,
+			std::vector<std::unique_ptr<LthBuffer>>& cboBuffers) :
+			particleSystem(device, renderPass, setLayouts, cboBuffers),
 			renderSystem(device, renderPass, setLayouts),
-			pointLightSystem(device, renderPass, setLayouts) {};
+			pointLightSystem(device, renderPass, setLayouts){};
 	};
 }
 

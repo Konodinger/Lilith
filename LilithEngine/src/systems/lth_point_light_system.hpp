@@ -1,22 +1,23 @@
 #ifndef __POINT_LIGHT_SYSTEM_HPP__
 #define __POINT_LIGHT_SYSTEM_HPP__
 
-#include "../lth_graphics_pipeline.hpp"
-#include "../lth_device.hpp"
-#include "../lth_camera.hpp"
-#include "../lth_frame_info.hpp"
+#include "lth_graphics_system.hpp"
 #include "../gameObjects/lth_game_object.hpp"
+#include "../lth_global_info.hpp"
 
 #include <memory>
 #include <vector>
 
 namespace lth {
 
-	class LthPointLightSystem {
+	class LthPointLightSystem : LthGraphicsSystem {
+		inline static std::string vertexShaderSpvPath = SHADERSFOLDERPATH("pointLight.vert.spv");
+		inline static std::string fragmentShaderSpvPath = SHADERSFOLDERPATH("pointLight.frag.spv");
+
 	public:
 
 		LthPointLightSystem(LthDevice& device, VkRenderPass renderPass, DescriptorSetLayouts& setLayouts);
-		~LthPointLightSystem();
+		//~LthPointLightSystem();
 
 		LthPointLightSystem(const LthPointLightSystem&) = delete;
 		LthPointLightSystem& operator=(const LthPointLightSystem&) = delete;
@@ -24,12 +25,12 @@ namespace lth {
 		void update(FrameInfo& frameInfo, GlobalUBO& ubo);
 		void render(FrameInfo &frameInfo);
 	private:
-		void createPipelineLayout(DescriptorSetLayouts& setLayouts);
+		//void createPipelineLayout(DescriptorSetLayouts& setLayouts);
 		void createPipeline(VkRenderPass renderPass);
 
-		LthDevice &lthDevice;
-		std::unique_ptr<LthGraphicsPipeline> lthGraphicsPipeline;
-		VkPipelineLayout pipelineLayout;
+		//LthDevice &lthDevice;
+		//std::unique_ptr<LthGraphicsPipeline> lthGraphicsPipeline;
+		//VkPipelineLayout pipelineLayout;
 	};
 }
 

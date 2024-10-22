@@ -21,7 +21,7 @@ namespace lth {
 	void LthGameObject::createDescriptorSet(LthDevice &lthDevice,
         LthDescriptorSetLayout* gameObjectSetLayout,
         LthDescriptorPool* generalDescriptorPool) {
-        gameObjectUboBuffers.resize(LthSwapChain::MAX_FRAMES_IN_FLIGHT);
+        gameObjectUboBuffers.resize(MAX_FRAMES_IN_FLIGHT);
         for (int i = 0; i < gameObjectUboBuffers.size(); ++i) {
             gameObjectUboBuffers[i] = std::make_unique<LthBuffer>(
                 lthDevice,
@@ -32,7 +32,7 @@ namespace lth {
             gameObjectUboBuffers[i]->map();
         }
 
-        gameObjectDescriptorSets.resize(LthSwapChain::MAX_FRAMES_IN_FLIGHT);
+        gameObjectDescriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
         for (int i = 0; i < gameObjectDescriptorSets.size(); ++i) {
             VkDescriptorBufferInfo bufferInfo = gameObjectUboBuffers[i]->descriptorInfo();
             LthDescriptorWriter(*gameObjectSetLayout, *generalDescriptorPool)

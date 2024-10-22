@@ -65,8 +65,10 @@ namespace lth {
 
       // cleanup synchronization objects
       for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+        vkDestroySemaphore(lthDevice.device(), computeFinishedSemaphores[i], nullptr);
         vkDestroySemaphore(lthDevice.device(), renderFinishedSemaphores[i], nullptr);
         vkDestroySemaphore(lthDevice.device(), imageAvailableSemaphores[i], nullptr);
+        vkDestroyFence(lthDevice.device(), computeInFlightFences[i], nullptr);
         vkDestroyFence(lthDevice.device(), inFlightFences[i], nullptr);
       }
     }
@@ -90,8 +92,26 @@ namespace lth {
       return result;
     }
 
-    VkResult LthSwapChain::submitCommandBuffers(
-        const VkCommandBuffer *buffers, uint32_t *imageIndex) {
+    void LthSwapChain::submitComputeCommandBuffers(const VkCommandBuffer* buffer) {
+        VkSubmitInfo submitInfo{};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+        vkWaitForFences(lthDevice.device(), 1, &computeInFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+
+        vkResetFences(lthDevice.device(), 1, &computeInFlightFences[currentFrame]);
+
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = buffer;
+        submitInfo.signalSemaphoreCount = 1;
+        submitInfo.pSignalSemaphores = &computeFinishedSemaphores[currentFrame];
+
+        if (vkQueueSubmit(lthDevice.computeQueue(), 1, &submitInfo, computeInFlightFences[currentFrame]) != VK_SUCCESS) {
+            throw std::runtime_error("Failed to submit compute command buffer!");
+        };
+    }
+
+    VkResult LthSwapChain::submitGraphicsCommandBuffers(
+        const VkCommandBuffer *buffer, uint32_t *imageIndex) {
       if (imagesInFlight[*imageIndex] != VK_NULL_HANDLE) {
         vkWaitForFences(lthDevice.device(), 1, &imagesInFlight[*imageIndex], VK_TRUE, UINT64_MAX);
       }
@@ -100,14 +120,14 @@ namespace lth {
       VkSubmitInfo submitInfo = {};
       submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-      VkSemaphore waitSemaphores[] = {imageAvailableSemaphores[currentFrame]};
-      VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-      submitInfo.waitSemaphoreCount = 1;
+      VkSemaphore waitSemaphores[] = { computeFinishedSemaphores[currentFrame], imageAvailableSemaphores[currentFrame] };
+      VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+      submitInfo.waitSemaphoreCount = 2;
       submitInfo.pWaitSemaphores = waitSemaphores;
       submitInfo.pWaitDstStageMask = waitStages;
 
       submitInfo.commandBufferCount = 1;
-      submitInfo.pCommandBuffers = buffers;
+      submitInfo.pCommandBuffers = buffer;
 
       VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
       submitInfo.signalSemaphoreCount = 1;
@@ -371,8 +391,10 @@ namespace lth {
     }
 
     void LthSwapChain::createSyncObjects() {
+      computeFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
       imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
       renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+      computeInFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
       inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
       imagesInFlight.resize(imageCount(), VK_NULL_HANDLE);
 
@@ -384,11 +406,15 @@ namespace lth {
       fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
       for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        if (vkCreateSemaphore(lthDevice.device(), &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) !=
+        if (vkCreateSemaphore(lthDevice.device(), &semaphoreInfo, nullptr, &computeFinishedSemaphores[i]) !=
+                VK_SUCCESS ||
+            vkCreateSemaphore(lthDevice.device(), &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) !=
                 VK_SUCCESS ||
             vkCreateSemaphore(lthDevice.device(), &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) !=
                 VK_SUCCESS ||
-            vkCreateFence(lthDevice.device(), &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS) {
+            vkCreateFence(lthDevice.device(), &fenceInfo, nullptr, &inFlightFences[i]) !=
+                VK_SUCCESS ||
+            vkCreateFence(lthDevice.device(), &fenceInfo, nullptr, &computeInFlightFences[i]) != VK_SUCCESS) {
           throw std::runtime_error("Failed to create synchronization objects for a frame!");
         }
       }

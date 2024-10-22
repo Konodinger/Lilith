@@ -5,7 +5,7 @@ layout (location = 1) in vec3 fragColor;
 layout (location = 2) in vec3 fragNormalWorld;
 layout (location = 3) in vec2 fragTexCoord;
 
-layout (binding = 1) uniform sampler2D texSampler[10];
+layout (set = 0, binding = 1) uniform sampler2D texSampler[10];
 
 struct PointLight {
 	vec3 position;

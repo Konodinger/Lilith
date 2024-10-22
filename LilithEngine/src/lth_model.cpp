@@ -130,7 +130,6 @@ namespace lth {
 
 		if (!hasIndexBuffer) return;
 
-		VkDeviceSize bufferSize = sizeof(indices[0]) * indexCount;
 		uint32_t indexSize = sizeof(indices[0]);
 
 		LthBuffer stagingBuffer{
@@ -143,6 +142,7 @@ namespace lth {
 
 		stagingBuffer.map();
 		stagingBuffer.writeToBuffer((void*)indices.data());
+		stagingBuffer.unmap();
 
 		indexBuffer = std::make_unique<LthBuffer>(
 			lthDevice,
@@ -151,7 +151,7 @@ namespace lth {
 			VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-		lthDevice.copyBuffer(stagingBuffer.getBuffer(), indexBuffer->getBuffer(), bufferSize);
+		lthDevice.copyBuffer(stagingBuffer.getBuffer(), indexBuffer->getBuffer(), stagingBuffer.getBufferSize());
 	}
 
 	void LthModel::draw(VkCommandBuffer commandBuffer) {

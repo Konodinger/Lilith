@@ -9,7 +9,7 @@ namespace lth {
 
 	LthComputePipeline::LthComputePipeline(
 		LthDevice& device,
-		const VkPipelineLayout& pipelineLayout,
+		VkPipelineLayout& pipelineLayout,
 		const std::string& computeFilePath) : LthPipeline(device) {
 		createComputePipeline(pipelineLayout, computeFilePath);
 	}
@@ -19,7 +19,7 @@ namespace lth {
 	}
 
 	void LthComputePipeline::bind(VkCommandBuffer commandBuffer) {
-		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, computePipeline);
+		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline);
 	}
 
 	void LthComputePipeline::defaultComputePipelineConfigInfo(LthComputePipelineConfigInfo& configInfo) {
@@ -27,7 +27,7 @@ namespace lth {
 	}
 
 	void LthComputePipeline::createComputePipeline(
-		const VkPipelineLayout& pipelineLayout,
+		VkPipelineLayout& pipelineLayout,
 		const std::string& computeFilePath) {
 
 		//assert section
@@ -35,7 +35,7 @@ namespace lth {
 		auto computeCode = readFile(computeFilePath);
 		createShaderModule(computeCode, &computeShaderModule);
 
-		VkPipelineShaderStageCreateInfo computeShaderStageInfo;
+		VkPipelineShaderStageCreateInfo computeShaderStageInfo{};
 		computeShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		computeShaderStageInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
 		computeShaderStageInfo.module = computeShaderModule;
@@ -43,8 +43,10 @@ namespace lth {
 
 		VkComputePipelineCreateInfo pipelineInfo{};
 		pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-		pipelineInfo.layout = pipelineLayout;
+		pipelineInfo.pNext = nullptr;
 		pipelineInfo.stage = computeShaderStageInfo;
+		pipelineInfo.layout = pipelineLayout;
+		pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
 		if (vkCreateComputePipelines(
 			lthDevice.device(),

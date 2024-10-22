@@ -1,37 +1,36 @@
 #ifndef __RENDER_SYSTEM_HPP__
 #define __RENDER_SYSTEM_HPP__
 
-#include "../lth_graphics_pipeline.hpp"
-#include "../lth_device.hpp"
-#include "../lth_camera.hpp"
-#include "../lth_frame_info.hpp"
+#include "lth_graphics_system.hpp"
 #include "../gameObjects/lth_game_object.hpp"
+#include "../lth_global_info.hpp"
 
 #include <memory>
 #include <vector>
 
-#define VERTEXSHADERSPVPATH "shaders/vertexShader.vert.spv"
-#define FRAGMENTSHADERSPVPATH "shaders/fragmentShader.frag.spv"
-
 namespace lth {
 
-	class LthRenderSystem {
+	class LthRenderSystem : LthGraphicsSystem {
+		inline static std::string vertexShaderSpvPath = SHADERSFOLDERPATH("standard.vert.spv");
+		inline static std::string fragmentShaderSpvPath = SHADERSFOLDERPATH("standard.frag.spv");
+
 	public:
 
 		LthRenderSystem(LthDevice& device, VkRenderPass renderPass, DescriptorSetLayouts& setLayouts);
-		~LthRenderSystem();
+		//~LthRenderSystem();
 
 		LthRenderSystem(const LthRenderSystem&) = delete;
 		LthRenderSystem& operator=(const LthRenderSystem&) = delete;
 		
-		void renderGameObjects(FrameInfo &frameInfo);
+		void render(FrameInfo &frameInfo);
 	private:
-		void createPipelineLayout(DescriptorSetLayouts& setLayouts);
+		//void createPipelineLayout(DescriptorSetLayouts& setLayouts);
 		void createPipeline(VkRenderPass renderPass);
 
-		LthDevice &lthDevice;
-		std::unique_ptr<LthGraphicsPipeline> lthGraphicsPipeline;
-		VkPipelineLayout pipelineLayout;
+
+		//LthDevice &lthDevice;
+		//std::unique_ptr<LthGraphicsPipeline> lthGraphicsPipeline;
+		//VkPipelineLayout pipelineLayout;
 	};
 }
 

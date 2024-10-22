@@ -104,15 +104,18 @@ namespace lth {
     }
 
     bool LthDescriptorPool::allocateDescriptorSets(
-        const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet& descriptor) const {
+        const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet& descriptor, uint32_t count) const {
+        std::vector<VkDescriptorSetLayout> setLayouts(count, descriptorSetLayout);
         VkDescriptorSetAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
         allocInfo.descriptorPool = descriptorPool;
         allocInfo.pSetLayouts = &descriptorSetLayout;
         allocInfo.descriptorSetCount = 1;
+        //allocInfo.pSetLayouts = setLayouts.data();
+        //allocInfo.descriptorSetCount = count;
 
         // Might want to create a "DescriptorPoolManager" class that handles this case, and builds
-        // a new pool whenever an old pool fills up. But this is beyond our current scope
+        // a new pool whenever an old pool fills up. But this is beyond our current scope.
         if (vkAllocateDescriptorSets(lthDevice.device(), &allocInfo, &descriptor) != VK_SUCCESS) {
             return false;
         }
@@ -181,7 +184,7 @@ namespace lth {
     }
 
     bool LthDescriptorWriter::build(VkDescriptorSet& set) {
-        bool success = pool.allocateDescriptorSets(setLayout.getDescriptorSetLayout(), set);
+        bool success = pool.allocateDescriptorSets(setLayout.getDescriptorSetLayout(), set, static_cast<uint32_t>(writes.size()));
         if (!success) {
             return false;
         }

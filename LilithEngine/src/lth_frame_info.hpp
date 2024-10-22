@@ -28,7 +28,8 @@ namespace lth {
 	struct FrameInfo {
 		int frameIndex;
 		float frameTime;
-		VkCommandBuffer commandBuffer;
+		VkCommandBuffer graphicsCommandBuffer;
+		VkCommandBuffer computeCommandBuffer;
 		LthCamera& camera;
 		VkDescriptorSet globalDescriptorSet;
 		LthGameObject::Map& gameObjects;

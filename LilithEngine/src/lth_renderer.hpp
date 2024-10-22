@@ -26,9 +26,14 @@ namespace lth {
 		float getAspectRatio() const { return lthSwapChain->extentAspectRatio(); }
 		bool isFrameInProgress() const { return isFrameStarted; }
 
-		VkCommandBuffer getCurrentCommandBuffer() const {
-			assert(isFrameStarted && "Cannot get command buffer when frame not in progress.");
-			return commandBuffers[currentFrameIndex];
+		VkCommandBuffer getCurrentGraphicsCommandBuffer() const {
+			assert(isFrameStarted && "Cannot get graphics command buffer when frame not in progress.");
+			return graphicsCommandBuffers[currentFrameIndex];
+		}
+
+		VkCommandBuffer getCurrentComputeCommandBuffer() const {
+			assert(isFrameStarted && "Cannot get compute command buffer when frame not in progress.");
+			return computeCommandBuffers[currentFrameIndex];
 		}
 
 		int getFrameIndex() const {
@@ -36,20 +41,23 @@ namespace lth {
 			return currentFrameIndex;
 		}
 
-		VkCommandBuffer beginFrame();
+		bool beginFrame();
+		bool beginComputes();
 		void endFrame();
+		void endComputes();
 		void beginSwapChainRenderPass(VkCommandBuffer commandBuffer);
 		void endSwapChainRenderPass(VkCommandBuffer commandBuffer);
 
 	private:
-		void createCommandBuffers();
-		void freeCommandBuffers();
+		void createCommandBuffers(std::vector<VkCommandBuffer>& commandBuffers);
+		void freeCommandBuffers(std::vector<VkCommandBuffer>& commandBuffers);
 		void recreateSwapChain();
 
 		LthWindow& lthWindow;
 		LthDevice& lthDevice;
 		std::unique_ptr<LthSwapChain>  lthSwapChain;
-		std::vector<VkCommandBuffer> commandBuffers;
+		std::vector<VkCommandBuffer> graphicsCommandBuffers;
+		std::vector<VkCommandBuffer> computeCommandBuffers;
 
 		uint32_t currentImageIndex;
 		int currentFrameIndex{ 0 };

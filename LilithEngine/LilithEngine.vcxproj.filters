@@ -24,9 +24,6 @@
     <ClCompile Include="src\app.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\lth_pipeline.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
     <ClCompile Include="src\lth_window.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
@@ -37,9 +34,6 @@
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="src\lth_model.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="src\lth_renderer.hpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="src\lth_renderer.cpp">
@@ -99,12 +93,27 @@
     <ClCompile Include="src\libraries\imgui\backends\imgui_impl_vulkan.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
+    <ClCompile Include="src\pipelines\lth_graphics_pipeline.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\pipelines\lth_pipeline.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\pipelines\lth_compute_pipeline.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\lth_particle_system.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\lth_system.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\lth_graphics_system.hpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\app.hpp">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
-    <ClInclude Include="src\lth_pipeline.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="src\lth_window.hpp">
@@ -179,17 +188,38 @@
     <ClInclude Include="src\systems\lth_system_set.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="src\pipelines\lth_graphics_pipeline.hpp">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lth_renderer.hpp">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="src\pipelines\lth_pipeline.hpp">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="src\pipelines\lth_compute_pipeline.hpp">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="src\systems\lth_particle_system.hpp">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lth_global_info.hpp">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="src\systems\lth_system.hpp">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\vertexShader.vert">
+    <None Include="Shaders\standard.vert">
       <Filter>shaders</Filter>
     </None>
     <None Include="shadersCompile.bat">
       <Filter>Fichiers sources</Filter>
     </None>
-    <None Include="shaders\fragmentShader.frag" />
-    <None Include="shaders\fragmentShader.frag.spv" />
-    <None Include="shaders\vertexShader.vert.spv" />
+    <None Include="shaders\standard.frag" />
+    <None Include="shaders\standard.frag.spv" />
+    <None Include="shaders\standard.vert.spv" />
     <None Include="shaders\pointLight.vert">
       <Filter>shaders</Filter>
     </None>
@@ -198,5 +228,17 @@
     </None>
     <None Include="shaders\pointLight.frag.spv" />
     <None Include="shaders\pointLight.vert.spv" />
+    <None Include="shaders\particle.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\particle.comp.spv" />
+    <None Include="shaders\particle.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\particle.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\particle.frag.spv" />
+    <None Include="shaders\particle.vert.spv" />
   </ItemGroup>
 </Project>

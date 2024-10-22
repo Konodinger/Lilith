@@ -1,6 +1,7 @@
 #ifndef __LTH_SWAP_CHAIN_HPP__
 #define __LTH_SWAP_CHAIN_HPP__
 
+#include "lth_global_info.hpp"
 #include "lth_device.hpp"
 
 #include <vulkan/vulkan.h>
@@ -13,7 +14,6 @@ namespace lth {
 
 class LthSwapChain {
  public:
-  static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
   LthSwapChain(LthDevice &deviceRef, VkExtent2D windowExtent);
   LthSwapChain(LthDevice &deviceRef, VkExtent2D windowExtent, std::shared_ptr<LthSwapChain> previous);
@@ -37,7 +37,8 @@ class LthSwapChain {
   VkFormat findDepthFormat();
 
   VkResult acquireNextImage(uint32_t *imageIndex);
-  VkResult submitCommandBuffers(const VkCommandBuffer *buffers, uint32_t *imageIndex);
+  void submitComputeCommandBuffers(const VkCommandBuffer *buffer);
+  VkResult submitGraphicsCommandBuffers(const VkCommandBuffer *buffer, uint32_t *imageIndex);
 
   bool compareSwapFormats(const LthSwapChain& swapChain) const {
       return swapChain.swapChainDepthFormat == swapChainDepthFormat &&
@@ -84,8 +85,10 @@ class LthSwapChain {
   VkSwapchainKHR swapChain;
   std::shared_ptr<LthSwapChain> oldSwapChain;
 
+  std::vector<VkSemaphore> computeFinishedSemaphores;
   std::vector<VkSemaphore> imageAvailableSemaphores;
   std::vector<VkSemaphore> renderFinishedSemaphores;
+  std::vector<VkFence> computeInFlightFences;
   std::vector<VkFence> inFlightFences;
   std::vector<VkFence> imagesInFlight;
   size_t currentFrame = 0;

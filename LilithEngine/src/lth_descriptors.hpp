@@ -15,6 +15,7 @@ namespace lth {
     struct DescriptorSetLayouts {
         std::unique_ptr<LthDescriptorSetLayout> globalSetLayout{};
         std::unique_ptr<LthDescriptorSetLayout> gameObjectSetLayout{};
+        std::unique_ptr<LthDescriptorSetLayout> computeSetLayout{};
     };
 
     class LthDescriptorSetLayout {
@@ -79,7 +80,7 @@ namespace lth {
         LthDescriptorPool& operator=(const LthDescriptorPool&) = delete;
 
         bool allocateDescriptorSets(
-            const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet& descriptor) const;
+            const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet& descriptor, uint32_t count) const;
 
         void freeDescriptors(std::vector<VkDescriptorSet>& descriptors) const;
         VkDescriptorPool getDescriptorPool() { return descriptorPool; }

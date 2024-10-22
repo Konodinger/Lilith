@@ -1,7 +1,6 @@
 #ifndef __LTH_COMPUTE_PIPELINE_HPP__
 #define __LTH_COMPUTE_PIPELINE_HPP__
 
-#include "lth_device.hpp"
 #include "lth_pipeline.hpp"
 
 #include <string>
@@ -21,7 +20,7 @@ namespace lth {
 	public:
 		LthComputePipeline(
 			LthDevice& device,
-			const VkPipelineLayout& pipelineLayout,
+			VkPipelineLayout& pipelineLayout,
 			const std::string& computeFilePath);
 		~LthComputePipeline() override;
 
@@ -34,7 +33,7 @@ namespace lth {
 		void bind(VkCommandBuffer commandBuffer) override;
 	private:
 		void createComputePipeline(
-			const VkPipelineLayout& pipelineLayout,
+			VkPipelineLayout& pipelineLayout,
 			const std::string& computeFilePath);
 
 

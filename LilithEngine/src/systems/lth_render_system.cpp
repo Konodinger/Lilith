@@ -1,17 +1,10 @@
 #include "lth_render_system.hpp"
 
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/constants.hpp>
-
 #include <cassert>
-#include <stdexcept>
 #include <array>
-#include <iostream>
 
 namespace lth {
-
+	
 	struct SimplePushConstantData {
 		glm::mat4 modelMatrix{ 1.f };
 		glm::mat4 normalMatrix{ 1.f };
@@ -21,58 +14,42 @@ namespace lth {
 		LthDevice& device,
 		VkRenderPass renderPass,
 		DescriptorSetLayouts& setLayouts)
-		: lthDevice{ device } {
-		createPipelineLayout(setLayouts);
-		createPipeline(renderPass);
-	}
-
-	LthRenderSystem::~LthRenderSystem() {
-		vkDestroyPipelineLayout(lthDevice.device(), pipelineLayout, nullptr);
-	}
-
-	void LthRenderSystem::createPipelineLayout(DescriptorSetLayouts& setLayouts) {
-
+		: LthGraphicsSystem(device, renderPass, setLayouts) {
 		VkPushConstantRange pushConstantRange{};
 		pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 		pushConstantRange.offset = 0;
 		pushConstantRange.size = sizeof(SimplePushConstantData);
 
 		std::vector<VkDescriptorSetLayout> descriptorSetLayouts{ setLayouts.globalSetLayout->getDescriptorSetLayout(),
-																setLayouts.gameObjectSetLayout->getDescriptorSetLayout()};
-
-		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
-		pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
-		pipelineLayoutInfo.pushConstantRangeCount = 1;
-		pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
-		if (vkCreatePipelineLayout(lthDevice.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
-			throw std::runtime_error("Failed to create pipeline layout!");
-		}
+																setLayouts.gameObjectSetLayout->getDescriptorSetLayout() };
+		createPipelineLayout(&graphicsPipelineLayout,
+			descriptorSetLayouts,
+			{ pushConstantRange });
+		createPipeline(renderPass);
 	}
 
 	void LthRenderSystem::createPipeline(VkRenderPass renderPass) {
-		assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout!");
+		assert(graphicsPipelineLayout != nullptr && "Cannot create pipeline before pipeline layout!");
 
 		LthGraphicsPipelineConfigInfo pipelineConfig{};
 		LthGraphicsPipeline::defaultGraphicsPipelineConfigInfo(pipelineConfig);
 		pipelineConfig.renderPass = renderPass;
-		pipelineConfig.pipelineLayout = pipelineLayout;
+		pipelineConfig.pipelineLayout = graphicsPipelineLayout;
 		pipelineConfig.multisampleInfo.rasterizationSamples = lthDevice.getMsaaSamples();
 		lthGraphicsPipeline = std::make_unique<LthGraphicsPipeline>(
 			lthDevice,
 			pipelineConfig,
-			VERTEXSHADERSPVPATH,
-			FRAGMENTSHADERSPVPATH);
+			vertexShaderSpvPath,
+			fragmentShaderSpvPath);
 	}
 
-	void LthRenderSystem::renderGameObjects(FrameInfo& frameInfo) {
-		lthGraphicsPipeline->bind(frameInfo.commandBuffer);
+	void LthRenderSystem::render(FrameInfo& frameInfo) {
+		lthGraphicsPipeline->bind(frameInfo.graphicsCommandBuffer);
 
 		vkCmdBindDescriptorSets(
-			frameInfo.commandBuffer,
+			frameInfo.graphicsCommandBuffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			pipelineLayout,
+			graphicsPipelineLayout,
 			0,
 			1,
 			&frameInfo.globalDescriptorSet,
@@ -88,25 +65,25 @@ namespace lth {
 			push.normalMatrix = obj.transform.normalMatrix();
 
 			vkCmdPushConstants(
-				frameInfo.commandBuffer,
-				pipelineLayout,
+				frameInfo.graphicsCommandBuffer,
+				graphicsPipelineLayout,
 				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 				0,
 				sizeof(SimplePushConstantData),
 				&push);
 
 			vkCmdBindDescriptorSets(
-				frameInfo.commandBuffer,
+				frameInfo.graphicsCommandBuffer,
 				VK_PIPELINE_BIND_POINT_GRAPHICS,
-				pipelineLayout,
+				graphicsPipelineLayout,
 				1,
 				1,
 				&obj.gameObjectDescriptorSets[frameInfo.frameIndex],
 				0,
 				nullptr);
 
-			obj.model->bind(frameInfo.commandBuffer);
-			obj.model->draw(frameInfo.commandBuffer);
+			obj.model->bind(frameInfo.graphicsCommandBuffer);
+			obj.model->draw(frameInfo.graphicsCommandBuffer);
 		}
 	}
 }

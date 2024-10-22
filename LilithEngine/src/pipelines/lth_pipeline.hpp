@@ -1,7 +1,7 @@
 #ifndef __LTH_PIPELINE_HPP__
 #define __LTH_PIPELINE_HPP__
 
-#include "lth_device.hpp"
+#include "../lth_device.hpp"
 
 #include <string>
 #include <vector>
