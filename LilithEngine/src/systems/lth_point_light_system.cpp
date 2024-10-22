@@ -56,15 +56,15 @@ namespace lth {
 	void LthPointLightSystem::createPipeline(VkRenderPass renderPass) {
 		assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout!");
 
-		PipelineConfigInfo pipelineConfig{};
-		LthPipeline::defaultPipelineConfigInfo(pipelineConfig);
-		LthPipeline::enableAlphaBlending(pipelineConfig);
+		LthGraphicsPipelineConfigInfo pipelineConfig{};
+		LthGraphicsPipeline::defaultGraphicsPipelineConfigInfo(pipelineConfig);
+		LthGraphicsPipeline::enableAlphaBlending(pipelineConfig);
 		pipelineConfig.bindingDescriptions.clear();
 		pipelineConfig.attributeDescriptions.clear();
 		pipelineConfig.renderPass = renderPass;
 		pipelineConfig.pipelineLayout = pipelineLayout;
 		pipelineConfig.multisampleInfo.rasterizationSamples = lthDevice.getMsaaSamples();
-		lthPipeline = std::make_unique<LthPipeline>(
+		lthGraphicsPipeline = std::make_unique<LthGraphicsPipeline>(
 			lthDevice,
 			pipelineConfig,
 			"shaders/pointLight.vert.spv",
@@ -100,7 +100,7 @@ namespace lth {
 			sorted[distSquared] = obj.getId();
 		}
 
-		lthPipeline->bind(frameInfo.commandBuffer);
+		lthGraphicsPipeline->bind(frameInfo.commandBuffer);
 
 		vkCmdBindDescriptorSets(
 			frameInfo.commandBuffer,

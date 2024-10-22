@@ -17,11 +17,11 @@ namespace lth {
     };
 
     struct QueueFamilyIndices {
-      uint32_t graphicsFamily;
+      uint32_t graphicsAndComputeFamily;
       uint32_t presentFamily;
-      bool graphicsFamilyHasValue = false;
+      bool graphicsAndComputeFamilyHasValue = false;
       bool presentFamilyHasValue = false;
-      bool isComplete() { return graphicsFamilyHasValue && presentFamilyHasValue; }
+      bool isComplete() { return graphicsAndComputeFamilyHasValue && presentFamilyHasValue; }
     };
 
     class LthDevice {
@@ -41,6 +41,7 @@ namespace lth {
       VkSurfaceKHR surface() { return _surface; }
       VkQueue graphicsQueue() { return _graphicsQueue; }
       VkQueue presentQueue() { return _presentQueue; }
+      VkQueue computeQueue() { return _computeQueue; }
 
       // ImGui methods
       ImGui_ImplVulkan_InitInfo getImGuiInitInfo(VkDescriptorPool descriptorPool, uint32_t imageCount);
@@ -133,8 +134,7 @@ namespace lth {
 
       VkDevice _device;
       VkSurfaceKHR _surface;
-      VkQueue _graphicsQueue;
-      VkQueue _presentQueue;
+      VkQueue _graphicsQueue, _presentQueue, _computeQueue;
 
       VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
     };

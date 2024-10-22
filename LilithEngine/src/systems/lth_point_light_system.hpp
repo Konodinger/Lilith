@@ -1,7 +1,7 @@
 #ifndef __POINT_LIGHT_SYSTEM_HPP__
 #define __POINT_LIGHT_SYSTEM_HPP__
 
-#include "../lth_pipeline.hpp"
+#include "../lth_graphics_pipeline.hpp"
 #include "../lth_device.hpp"
 #include "../lth_camera.hpp"
 #include "../lth_frame_info.hpp"
@@ -28,7 +28,7 @@ namespace lth {
 		void createPipeline(VkRenderPass renderPass);
 
 		LthDevice &lthDevice;
-		std::unique_ptr<LthPipeline> lthPipeline;
+		std::unique_ptr<LthGraphicsPipeline> lthGraphicsPipeline;
 		VkPipelineLayout pipelineLayout;
 	};
 }

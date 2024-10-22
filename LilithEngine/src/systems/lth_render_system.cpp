@@ -54,12 +54,12 @@ namespace lth {
 	void LthRenderSystem::createPipeline(VkRenderPass renderPass) {
 		assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout!");
 
-		PipelineConfigInfo pipelineConfig{};
-		LthPipeline::defaultPipelineConfigInfo(pipelineConfig);
+		LthGraphicsPipelineConfigInfo pipelineConfig{};
+		LthGraphicsPipeline::defaultGraphicsPipelineConfigInfo(pipelineConfig);
 		pipelineConfig.renderPass = renderPass;
 		pipelineConfig.pipelineLayout = pipelineLayout;
 		pipelineConfig.multisampleInfo.rasterizationSamples = lthDevice.getMsaaSamples();
-		lthPipeline = std::make_unique<LthPipeline>(
+		lthGraphicsPipeline = std::make_unique<LthGraphicsPipeline>(
 			lthDevice,
 			pipelineConfig,
 			VERTEXSHADERSPVPATH,
@@ -67,7 +67,7 @@ namespace lth {
 	}
 
 	void LthRenderSystem::renderGameObjects(FrameInfo& frameInfo) {
-		lthPipeline->bind(frameInfo.commandBuffer);
+		lthGraphicsPipeline->bind(frameInfo.commandBuffer);
 
 		vkCmdBindDescriptorSets(
 			frameInfo.commandBuffer,

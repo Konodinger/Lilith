@@ -14,7 +14,7 @@ namespace lth {
 	class LthRenderer {
 	public:
 
-		LthRenderer(LthWindow &window, LthDevice &device);
+		LthRenderer(LthWindow& window, LthDevice& device);
 		~LthRenderer();
 
 		LthRenderer(const LthRenderer&) = delete;

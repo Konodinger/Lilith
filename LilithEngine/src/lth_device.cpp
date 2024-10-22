@@ -170,7 +170,7 @@ namespace lth {
       QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
 
       std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-      std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily, indices.presentFamily};
+      std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsAndComputeFamily, indices.presentFamily};
 
       float queuePriority = 1.0f;
       for (uint32_t queueFamily : uniqueQueueFamilies) {
@@ -209,8 +209,9 @@ namespace lth {
         throw std::runtime_error("Failed to create logical device!");
       }
 
-      vkGetDeviceQueue(_device, indices.graphicsFamily, 0, &_graphicsQueue);
+      vkGetDeviceQueue(_device, indices.graphicsAndComputeFamily, 0, &_graphicsQueue);
       vkGetDeviceQueue(_device, indices.presentFamily, 0, &_presentQueue);
+      vkGetDeviceQueue(_device, indices.graphicsAndComputeFamily, 0, &_computeQueue);
     }
 
     void LthDevice::createCommandPool() {
@@ -218,7 +219,7 @@ namespace lth {
 
       VkCommandPoolCreateInfo poolInfo = {};
       poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-      poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
+      poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsAndComputeFamily;
       poolInfo.flags =
           VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
@@ -362,9 +363,10 @@ namespace lth {
 
       int i = 0;
       for (const auto &queueFamily : queueFamilies) {
-        if (queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-          indices.graphicsFamily = i;
-          indices.graphicsFamilyHasValue = true;
+        if (queueFamily.queueCount > 0 && (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+            && (queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT)) {
+          indices.graphicsAndComputeFamily = i;
+          indices.graphicsAndComputeFamilyHasValue = true;
         }
         VkBool32 presentSupport = false;
         vkGetPhysicalDeviceSurfaceSupportKHR(device, i, _surface, &presentSupport);
@@ -430,8 +432,8 @@ namespace lth {
         initInfo.PhysicalDevice = physicalDevice;
         initInfo.Device = _device;
         QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
-        assert(queueFamilyIndices.graphicsFamilyHasValue && "Error: could not init ImGui, graphics queue has no family!");
-        initInfo.QueueFamily = queueFamilyIndices.graphicsFamily;
+        assert(queueFamilyIndices.graphicsAndComputeFamilyHasValue && "Error: could not init ImGui, graphics queue has no family!");
+        initInfo.QueueFamily = queueFamilyIndices.graphicsAndComputeFamily;
         initInfo.Queue = _graphicsQueue;
         initInfo.PipelineCache = VK_NULL_HANDLE;
         initInfo.DescriptorPool = descriptorPool;
@@ -468,7 +470,7 @@ namespace lth {
       bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
       if (vkCreateBuffer(_device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to create vertex buffer!");
+        throw std::runtime_error("Failed to create buffer!");
       }
 
       VkMemoryRequirements memRequirements;
@@ -480,7 +482,7 @@ namespace lth {
       allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
 
       if (vkAllocateMemory(_device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to allocate vertex buffer memory!");
+        throw std::runtime_error("Failed to allocate buffer memory!");
       }
 
       vkBindBufferMemory(_device, buffer, bufferMemory, 0);
