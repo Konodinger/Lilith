@@ -77,6 +77,11 @@ namespace lth {
 
     // class member functions
     LthDevice::LthDevice(LthWindow &window) : window{window} {
+        rayTracingProperties.pNext = &accelStructProperties;
+        physicalDeviceProperties.pNext = &rayTracingProperties;
+
+        rayTracingFeatures.pNext = &accelStructFeatures;
+        physicalDeviceFeatures.pNext = &rayTracingFeatures;
       createInstance();
       setupDebugMessenger();
       createSurface();
@@ -166,11 +171,11 @@ namespace lth {
         throw std::runtime_error("Failed to find a suitable GPU!");
       }
 
-      vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
+      vkGetPhysicalDeviceProperties2(physicalDevice, &physicalDeviceProperties);
      
       // Section to print GPU properties. 
 
-      std::cout << "Physical device: " << physicalDeviceProperties.deviceName << std::endl;
+      std::cout << "Physical device: " << physicalDeviceProperties.properties.deviceName << std::endl;
       
       //msaaSamples = getMaxUsableSampleCount();
     }
@@ -250,11 +255,10 @@ namespace lth {
         swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
       }
 
-      VkPhysicalDeviceFeatures supportedFeatures;
-      vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
+      vkGetPhysicalDeviceFeatures2(device, &physicalDeviceFeatures);
 
       return indices.isComplete() && extensionsSupported && swapChainAdequate &&
-             supportedFeatures.samplerAnisotropy;
+          physicalDeviceFeatures.features.samplerAnisotropy;
     }
 
     void LthDevice::populateDebugMessengerCreateInfo(
@@ -817,8 +821,8 @@ namespace lth {
     }
 
     VkSampleCountFlagBits LthDevice::getMaxUsableSampleCount() {
-        VkSampleCountFlags counts = physicalDeviceProperties.limits.framebufferColorSampleCounts
-            & physicalDeviceProperties.limits.framebufferDepthSampleCounts; //If a stencil is implemented, the device also needs to get framebufferStencilSampleCounts.
+        VkSampleCountFlags counts = physicalDeviceProperties.properties.limits.framebufferColorSampleCounts
+            & physicalDeviceProperties.properties.limits.framebufferDepthSampleCounts; //If a stencil is implemented, the device also needs to get framebufferStencilSampleCounts.
         for (auto flagBit : { VK_SAMPLE_COUNT_64_BIT, VK_SAMPLE_COUNT_32_BIT, VK_SAMPLE_COUNT_16_BIT, VK_SAMPLE_COUNT_8_BIT, VK_SAMPLE_COUNT_4_BIT, VK_SAMPLE_COUNT_2_BIT }) {
             if (counts & flagBit) return flagBit;
         }

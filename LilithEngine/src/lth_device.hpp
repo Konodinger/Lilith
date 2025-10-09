@@ -103,7 +103,20 @@ namespace lth {
       // Properties helper methods
       VkSampleCountFlagBits getMsaaSamples() { return msaaSamples; }
       bool isMsaaEnabled() { return (msaaSamples != VK_SAMPLE_COUNT_1_BIT); }
-      VkPhysicalDeviceProperties physicalDeviceProperties;
+
+
+      VkPhysicalDeviceProperties2 physicalDeviceProperties{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 };
+      // Ray tracing extensions
+      VkPhysicalDeviceRayTracingPipelinePropertiesKHR rayTracingProperties{
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR };
+      VkPhysicalDeviceAccelerationStructurePropertiesKHR accelStructProperties{
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR };
+
+      VkPhysicalDeviceFeatures2 physicalDeviceFeatures{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
+      VkPhysicalDeviceRayTracingPipelineFeaturesKHR rayTracingFeatures{
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR };
+      VkPhysicalDeviceAccelerationStructureFeaturesKHR accelStructFeatures{
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR };
 
      private:
       void createInstance();
