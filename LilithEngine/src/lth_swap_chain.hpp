@@ -84,6 +84,7 @@ class LthSwapChain {
 
   VkSwapchainKHR swapChain;
   std::shared_ptr<LthSwapChain> oldSwapChain;
+  uint32_t swapChainImageCount;
 
   std::vector<VkSemaphore> computeFinishedSemaphores;
   std::vector<VkSemaphore> imageAvailableSemaphores;
@@ -92,6 +93,7 @@ class LthSwapChain {
   std::vector<VkFence> inFlightFences;
   std::vector<VkFence> imagesInFlight;
   size_t currentFrame = 0;
+  size_t currentSemaphore = 0;
 };
 
 }

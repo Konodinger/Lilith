@@ -4,6 +4,7 @@
 
 #include <limits>
 #define GLM_FORCE_RADIANS
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/ext.hpp>

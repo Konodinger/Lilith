@@ -83,12 +83,12 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\VulkanSDK\1.3.261.1\Include;$(ProjectDir)src\libraries\glm-0.9.9.8;$(ProjectDir)src\libraries\glfw-3.3.8.bin.WIN64\include;$(ProjectDir)src\libraries\imgui;$(ProjectDir)src\libraries\tinyobjloader;$(ProjectDir)src\libraries\stb-master</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\VulkanSDK\1.4.328.0\Include;$(ProjectDir)src\libraries\glm-0.9.9.8;$(ProjectDir)src\libraries\glfw-3.3.8.bin.WIN64\include;$(ProjectDir)src\libraries\imgui;$(ProjectDir)src\libraries\tinyobjloader;$(ProjectDir)src\libraries\stb-master</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\VulkanSDK\1.3.261.1\Lib;$(ProjectDir)src\libraries\glfw-3.3.8.bin.WIN64\lib-vc2022</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\VulkanSDK\1.4.328.0\Lib;$(ProjectDir)src\libraries\glfw-3.3.8.bin.WIN64\lib-vc2022</AdditionalLibraryDirectories>
       <AdditionalOptions>/NODEFAULTLIB:MSVCRT %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PreBuildEvent>
@@ -104,14 +104,14 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\VulkanSDK\1.3.261.1\Include;$(ProjectDir)src\libraries\glm-0.9.9.8;$(ProjectDir)src\libraries\glfw-3.3.8.bin.WIN64\include;$(ProjectDir)src\libraries\imgui;$(ProjectDir)src\libraries\tinyobjloader;$(ProjectDir)src\libraries\stb-master</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\VulkanSDK\1.4.328.0\Include;$(ProjectDir)src\libraries\glm-0.9.9.8;$(ProjectDir)src\libraries\glfw-3.3.8.bin.WIN64\include;$(ProjectDir)src\libraries\imgui;$(ProjectDir)src\libraries\tinyobjloader;$(ProjectDir)src\libraries\stb-master</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\VulkanSDK\1.3.261.1\Lib;$(ProjectDir)src\libraries\glfw-3.3.8.bin.WIN64\lib-vc2022</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\VulkanSDK\1.4.328.0\Lib;$(ProjectDir)src\libraries\glfw-3.3.8.bin.WIN64\lib-vc2022</AdditionalLibraryDirectories>
       <AdditionalOptions>/NODEFAULTLIB:MSVCRT %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PreBuildEvent>
@@ -124,14 +124,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\VulkanSDK\1.3.261.1\Include;$(ProjectDir)src\libraries\glm-0.9.9.8;$(ProjectDir)src\libraries\glfw-3.3.8.bin.WIN64\include;$(ProjectDir)src\libraries\imgui;$(ProjectDir)src\libraries\tinyobjloader;$(ProjectDir)src\libraries\stb-master</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\VulkanSDK\1.4.328.0\Include;$(ProjectDir)src\libraries\glm-0.9.9.8;$(ProjectDir)src\libraries\glfw-3.3.8.bin.WIN64\include;$(ProjectDir)src\libraries\imgui;$(ProjectDir)src\libraries\tinyobjloader;$(ProjectDir)src\libraries\stb-master</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>Default</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\VulkanSDK\1.3.261.1\Lib;$(ProjectDir)src\libraries\glfw-3.3.8.bin.WIN64\lib-vc2022</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\VulkanSDK\1.4.328.0\Lib;$(ProjectDir)src\libraries\glfw-3.3.8.bin.WIN64\lib-vc2022</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/NODEFAULTLIB:MSVCRT %(AdditionalOptions)</AdditionalOptions>
     </Link>
@@ -152,7 +152,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\VulkanSDK\1.3.261.1\Include;$(ProjectDir)src\libraries\glm-0.9.9.8;$(ProjectDir)src\libraries\glfw-3.3.8.bin.WIN64\include;$(ProjectDir)src\libraries\imgui;$(ProjectDir)src\libraries\tinyobjloader;$(ProjectDir)src\libraries\stb-master</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\VulkanSDK\1.4.328.0\Include;$(ProjectDir)src\libraries\glm-0.9.9.8;$(ProjectDir)src\libraries\glfw-3.3.8.bin.WIN64\include;$(ProjectDir)src\libraries\imgui;$(ProjectDir)src\libraries\tinyobjloader;$(ProjectDir)src\libraries\stb-master</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>Default</LanguageStandard_C>
     </ClCompile>
@@ -161,7 +161,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\VulkanSDK\1.3.261.1\Lib;$(ProjectDir)src\libraries\glfw-3.3.8.bin.WIN64\lib-vc2022</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\VulkanSDK\1.4.328.0\Lib;$(ProjectDir)src\libraries\glfw-3.3.8.bin.WIN64\lib-vc2022</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/NODEFAULTLIB:MSVCRT %(AdditionalOptions)</AdditionalOptions>
     </Link>
@@ -235,7 +235,9 @@
     <ClInclude Include="src\lth_model.hpp" />
     <ClInclude Include="src\lth_swap_chain.hpp" />
     <ClInclude Include="src\lth_window.hpp" />
+    <ClInclude Include="src\pipelines\lth_ray_tracing_pipeline.hpp" />
     <ClInclude Include="src\systems\lth_particle_system.hpp" />
+    <ClInclude Include="src\systems\lth_ray_tracing_system.hpp" />
     <ClInclude Include="src\systems\lth_system.hpp" />
     <ClInclude Include="src\systems\lth_system_set.hpp" />
     <ClInclude Include="src\systems\lth_point_light_system.hpp" />
