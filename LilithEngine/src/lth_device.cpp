@@ -6,6 +6,7 @@
 #include <iostream>
 #include <set>
 #include <unordered_set>
+#include <Windows.h>
 
 namespace lth {
 
@@ -16,20 +17,24 @@ namespace lth {
         const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
         void *pUserData) {
 
+        auto console_color = GetStdHandle(STD_OUTPUT_HANDLE);
         std::string severityFlag;
         std::string typeFlag;
+        
         switch (messageSeverity) {
-        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT: severityFlag = "verbose severity - "; break;
-        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT: severityFlag = "info severity - "; break;
-        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT: severityFlag = "warning severity - "; break;
-        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT: severityFlag = "error severity - "; break;
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT: SetConsoleTextAttribute(console_color, 10); severityFlag = "verbose severity - "; break;
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT: SetConsoleTextAttribute(console_color, 9); severityFlag = "info severity - "; break;
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT: SetConsoleTextAttribute(console_color, 14); severityFlag = "warning severity - "; break;
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT: SetConsoleTextAttribute(console_color, 12); severityFlag = "error severity - "; break;
         }
         switch (messageType) {
         case VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT: typeFlag = "general type: "; break;
         case VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT: typeFlag = "validation type: "; break;
         case VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT: typeFlag = "performance type: "; break;
         }
-        std::cerr << "Validation layer - " << severityFlag << typeFlag << std::endl << pCallbackData->pMessage << std::endl;
+        std::cerr << "Validation layer - " << severityFlag << typeFlag << std::endl;
+        SetConsoleTextAttribute(console_color, 7);
+        std::cerr << pCallbackData->pMessage << std::endl << std::endl;
 
         return VK_FALSE;
     }
