@@ -1,6 +1,7 @@
 #ifndef __LTH_WINDOW_HPP__
 #define __LTH_WINDOW_HPP__
 
+#include "lth_compile_options.hpp"
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 

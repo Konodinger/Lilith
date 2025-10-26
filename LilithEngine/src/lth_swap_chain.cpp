@@ -36,56 +36,56 @@ namespace lth {
 
     LthSwapChain::~LthSwapChain() {
       for (auto imageView : swapChainImageViews) {
-        vkDestroyImageView(lthDevice.device(), imageView, nullptr);
+        vkDestroyImageView(lthDevice.getDevice(), imageView, nullptr);
       }
       swapChainImageViews.clear();
 
       if (swapChain != nullptr) {
-        vkDestroySwapchainKHR(lthDevice.device(), swapChain, nullptr);
+        vkDestroySwapchainKHR(lthDevice.getDevice(), swapChain, nullptr);
         swapChain = nullptr;
       }
 
       for (int i = 0; i < colorImages.size(); i++) {
-          vkDestroyImageView(lthDevice.device(), colorImageViews[i], nullptr);
-          vkDestroyImage(lthDevice.device(), colorImages[i], nullptr);
-          vkFreeMemory(lthDevice.device(), colorImageMemories[i], nullptr);
+          vkDestroyImageView(lthDevice.getDevice(), colorImageViews[i], nullptr);
+          vkDestroyImage(lthDevice.getDevice(), colorImages[i], nullptr);
+          vkFreeMemory(lthDevice.getDevice(), colorImageMemories[i], nullptr);
       }
 
       for (int i = 0; i < depthImages.size(); i++) {
-        vkDestroyImageView(lthDevice.device(), depthImageViews[i], nullptr);
-        vkDestroyImage(lthDevice.device(), depthImages[i], nullptr);
-        vkFreeMemory(lthDevice.device(), depthImageMemories[i], nullptr);
+        vkDestroyImageView(lthDevice.getDevice(), depthImageViews[i], nullptr);
+        vkDestroyImage(lthDevice.getDevice(), depthImages[i], nullptr);
+        vkFreeMemory(lthDevice.getDevice(), depthImageMemories[i], nullptr);
       }
 
       for (auto framebuffer : swapChainFramebuffers) {
-        vkDestroyFramebuffer(lthDevice.device(), framebuffer, nullptr);
+        vkDestroyFramebuffer(lthDevice.getDevice(), framebuffer, nullptr);
       }
 
-      vkDestroyRenderPass(lthDevice.device(), renderPass, nullptr);
+      vkDestroyRenderPass(lthDevice.getDevice(), renderPass, nullptr);
 
       // cleanup synchronization objects
       for (size_t i = 0; i < swapChainImageCount; i++) {
-        vkDestroySemaphore(lthDevice.device(), computeFinishedSemaphores[i], nullptr);
-        vkDestroySemaphore(lthDevice.device(), renderFinishedSemaphores[i], nullptr);
-        vkDestroySemaphore(lthDevice.device(), imageAvailableSemaphores[i], nullptr);
+        vkDestroySemaphore(lthDevice.getDevice(), computeFinishedSemaphores[i], nullptr);
+        vkDestroySemaphore(lthDevice.getDevice(), renderFinishedSemaphores[i], nullptr);
+        vkDestroySemaphore(lthDevice.getDevice(), imageAvailableSemaphores[i], nullptr);
       }
 
       for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        vkDestroyFence(lthDevice.device(), computeInFlightFences[i], nullptr);
-        vkDestroyFence(lthDevice.device(), inFlightFences[i], nullptr);
+        vkDestroyFence(lthDevice.getDevice(), computeInFlightFences[i], nullptr);
+        vkDestroyFence(lthDevice.getDevice(), inFlightFences[i], nullptr);
       }
     }
 
     VkResult LthSwapChain::acquireNextImage(uint32_t *imageIndex) {
       vkWaitForFences(
-          lthDevice.device(),
+          lthDevice.getDevice(),
           1,
           &inFlightFences[currentFrame],
           VK_TRUE,
           std::numeric_limits<uint64_t>::max());
 
       VkResult result = vkAcquireNextImageKHR(
-          lthDevice.device(),
+          lthDevice.getDevice(),
           swapChain,
           std::numeric_limits<uint64_t>::max(),
           imageAvailableSemaphores[currentSemaphore],  // must be a not signaled semaphore
@@ -99,16 +99,16 @@ namespace lth {
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-        vkWaitForFences(lthDevice.device(), 1, &computeInFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+        vkWaitForFences(lthDevice.getDevice(), 1, &computeInFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
-        vkResetFences(lthDevice.device(), 1, &computeInFlightFences[currentFrame]);
+        vkResetFences(lthDevice.getDevice(), 1, &computeInFlightFences[currentFrame]);
 
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers = buffer;
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = &computeFinishedSemaphores[currentSemaphore];
 
-        if (vkQueueSubmit(lthDevice.computeQueue(), 1, &submitInfo, computeInFlightFences[currentFrame]) != VK_SUCCESS) {
+        if (vkQueueSubmit(lthDevice.getComputeQueue(), 1, &submitInfo, computeInFlightFences[currentFrame]) != VK_SUCCESS) {
             throw std::runtime_error("Failed to submit compute command buffer!");
         };
     }
@@ -116,7 +116,7 @@ namespace lth {
     VkResult LthSwapChain::submitGraphicsCommandBuffers(
         const VkCommandBuffer *buffer, uint32_t *imageIndex) {
       if (imagesInFlight[*imageIndex] != VK_NULL_HANDLE) {
-        vkWaitForFences(lthDevice.device(), 1, &imagesInFlight[*imageIndex], VK_TRUE, UINT64_MAX);
+        vkWaitForFences(lthDevice.getDevice(), 1, &imagesInFlight[*imageIndex], VK_TRUE, UINT64_MAX);
       }
       imagesInFlight[*imageIndex] = inFlightFences[currentFrame];
 
@@ -136,8 +136,8 @@ namespace lth {
       submitInfo.signalSemaphoreCount = 1;
       submitInfo.pSignalSemaphores = signalSemaphores;
 
-      vkResetFences(lthDevice.device(), 1, &inFlightFences[currentFrame]);
-      if (vkQueueSubmit(lthDevice.graphicsQueue(), 1, &submitInfo, inFlightFences[currentFrame]) !=
+      vkResetFences(lthDevice.getDevice(), 1, &inFlightFences[currentFrame]);
+      if (vkQueueSubmit(lthDevice.getGraphicsQueue(), 1, &submitInfo, inFlightFences[currentFrame]) !=
           VK_SUCCESS) {
         throw std::runtime_error("Failed to submit draw command buffer!");
       }
@@ -154,7 +154,7 @@ namespace lth {
 
       presentInfo.pImageIndices = imageIndex;
 
-      auto result = vkQueuePresentKHR(lthDevice.presentQueue(), &presentInfo);
+      auto result = vkQueuePresentKHR(lthDevice.getPresentQueue(), &presentInfo);
 
       currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
       currentSemaphore = (currentSemaphore + 1) % swapChainImageCount;
@@ -177,7 +177,7 @@ namespace lth {
 
       VkSwapchainCreateInfoKHR createInfo = {};
       createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-      createInfo.surface = lthDevice.surface();
+      createInfo.surface = lthDevice.getSurface();
 
       createInfo.minImageCount = swapChainImageCount;
       createInfo.imageFormat = surfaceFormat.format;
@@ -207,7 +207,7 @@ namespace lth {
 
       createInfo.oldSwapchain = oldSwapChain == nullptr ? VK_NULL_HANDLE : oldSwapChain->swapChain;
 
-      if (vkCreateSwapchainKHR(lthDevice.device(), &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
+      if (vkCreateSwapchainKHR(lthDevice.getDevice(), &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create swap chain!");
       }
 
@@ -215,9 +215,9 @@ namespace lth {
       // allowed to create a swap chain with more. That's why we'll first query the final number of
       // images with vkGetSwapchainImagesKHR, then resize the container and finally call it again to
       // retrieve the handles.
-      vkGetSwapchainImagesKHR(lthDevice.device(), swapChain, &swapChainImageCount, nullptr);
+      vkGetSwapchainImagesKHR(lthDevice.getDevice(), swapChain, &swapChainImageCount, nullptr);
       swapChainImages.resize(swapChainImageCount);
-      vkGetSwapchainImagesKHR(lthDevice.device(), swapChain, &swapChainImageCount, swapChainImages.data());
+      vkGetSwapchainImagesKHR(lthDevice.getDevice(), swapChain, &swapChainImageCount, swapChainImages.data());
 
       swapChainImageFormat = surfaceFormat.format;
       swapChainDepthFormat = findDepthFormat();
@@ -313,7 +313,7 @@ namespace lth {
       renderPassInfo.dependencyCount = 1;
       renderPassInfo.pDependencies = &dependency;
 
-      if (vkCreateRenderPass(lthDevice.device(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
+      if (vkCreateRenderPass(lthDevice.getDevice(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create render pass!");
       }
     }
@@ -339,7 +339,7 @@ namespace lth {
             framebufferInfo.layers = 1;
 
             if (vkCreateFramebuffer(
-                lthDevice.device(),
+                lthDevice.getDevice(),
                 &framebufferInfo,
                 nullptr,
                 &swapChainFramebuffers[i]) != VK_SUCCESS) {
@@ -407,11 +407,11 @@ namespace lth {
       semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
       for (size_t i = 0; i < swapChainImageCount; i++) {
-          if (vkCreateSemaphore(lthDevice.device(), &semaphoreInfo, nullptr, &computeFinishedSemaphores[i]) !=
+          if (vkCreateSemaphore(lthDevice.getDevice(), &semaphoreInfo, nullptr, &computeFinishedSemaphores[i]) !=
               VK_SUCCESS ||
-              vkCreateSemaphore(lthDevice.device(), &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) !=
+              vkCreateSemaphore(lthDevice.getDevice(), &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) !=
               VK_SUCCESS ||
-              vkCreateSemaphore(lthDevice.device(), &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) !=
+              vkCreateSemaphore(lthDevice.getDevice(), &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) !=
               VK_SUCCESS) {
               throw std::runtime_error("Failed to create semaphores for a frame!");
           }
@@ -422,9 +422,9 @@ namespace lth {
       fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
       for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        if (vkCreateFence(lthDevice.device(), &fenceInfo, nullptr, &inFlightFences[i]) !=
+        if (vkCreateFence(lthDevice.getDevice(), &fenceInfo, nullptr, &inFlightFences[i]) !=
                 VK_SUCCESS ||
-            vkCreateFence(lthDevice.device(), &fenceInfo, nullptr, &computeInFlightFences[i]) != VK_SUCCESS) {
+            vkCreateFence(lthDevice.getDevice(), &fenceInfo, nullptr, &computeInFlightFences[i]) != VK_SUCCESS) {
           throw std::runtime_error("Failed to create fences for a frame!");
         }
       }

@@ -14,8 +14,8 @@ namespace lth {
 		createComputePipeline(pipelineLayout, computeFilePath);
 	}
 	LthComputePipeline::~LthComputePipeline() {
-		vkDestroyShaderModule(lthDevice.device(), computeShaderModule, nullptr);
-		vkDestroyPipeline(lthDevice.device(), computePipeline, nullptr);
+		vkDestroyShaderModule(lthDevice.getDevice(), computeShaderModule, nullptr);
+		vkDestroyPipeline(lthDevice.getDevice(), computePipeline, nullptr);
 	}
 
 	void LthComputePipeline::bind(VkCommandBuffer commandBuffer) {
@@ -49,7 +49,7 @@ namespace lth {
 		pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
 		if (vkCreateComputePipelines(
-			lthDevice.device(),
+			lthDevice.getDevice(),
 			VK_NULL_HANDLE,
 			1,
 			&pipelineInfo,

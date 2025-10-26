@@ -21,10 +21,10 @@ namespace lth {
 	}
 
 	LthTexture::~LthTexture() {
-		vkDestroySampler(lthDevice.device(), textureSampler, nullptr);
-		vkDestroyImageView(lthDevice.device(), textureImageView, nullptr);
-		vkDestroyImage(lthDevice.device(), textureImage, nullptr);
-		vkFreeMemory(lthDevice.device(), textureImageMemory, nullptr);
+		vkDestroySampler(lthDevice.getDevice(), textureSampler, nullptr);
+		vkDestroyImageView(lthDevice.getDevice(), textureImageView, nullptr);
+		vkDestroyImage(lthDevice.getDevice(), textureImage, nullptr);
+		vkFreeMemory(lthDevice.getDevice(), textureImageMemory, nullptr);
 	};
 
 	bool LthTexture::Builder::loadTexture(const std::string& file) {
@@ -119,7 +119,7 @@ namespace lth {
 		samplerInfo.minLod = 0.f;
 		samplerInfo.maxLod = static_cast<float>(mipLevels);
 
-		if (vkCreateSampler(lthDevice.device(), &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS) {
+		if (vkCreateSampler(lthDevice.getDevice(), &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to create texture sampler!");
 		}
 

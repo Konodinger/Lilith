@@ -23,7 +23,7 @@ namespace lth {
 	}
 
 	LthParticleSystem::~LthParticleSystem() {
-		vkDestroyPipelineLayout(lthDevice.device(), computePipelineLayout, nullptr);
+		vkDestroyPipelineLayout(lthDevice.getDevice(), computePipelineLayout, nullptr);
 	}
 
 	void LthParticleSystem::createPipeline(VkRenderPass renderPass) {

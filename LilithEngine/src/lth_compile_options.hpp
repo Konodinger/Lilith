@@ -1,7 +1,7 @@
 #ifndef __LTH_COMPILE_OPTIONS_HPP__
 #define __LTH_COMPILE_OPTIONS_HPP__
 
-#include <vulkan/vulkan.h>
+#include <volk.h>
 #include <vector>
 
 //
@@ -40,5 +40,12 @@ namespace lth {
         { VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
         VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME, VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME };
 }
+
+//static auto dl = vk::detail::DispatchLoaderDynamic();
+//
+//PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr = dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
+//
+//VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
+
 
 #endif

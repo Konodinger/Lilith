@@ -29,7 +29,7 @@ namespace lth {
 		createInfo.codeSize = code.size();
 		createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
 
-		if (vkCreateShaderModule(lthDevice.device(), &createInfo, nullptr, shaderModule) != VK_SUCCESS) {
+		if (vkCreateShaderModule(lthDevice.getDevice(), &createInfo, nullptr, shaderModule) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to create shader module!");
 		}
 	}

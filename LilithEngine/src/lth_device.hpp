@@ -37,11 +37,11 @@ namespace lth {
 
       VkInstance const& getInstance() { return instance; }
       VkCommandPool getCommandPool() { return commandPool; }
-      VkDevice device() { return _device; }
-      VkSurfaceKHR surface() { return _surface; }
-      VkQueue graphicsQueue() { return _graphicsQueue; }
-      VkQueue presentQueue() { return _presentQueue; }
-      VkQueue computeQueue() { return _computeQueue; }
+      VkDevice getDevice() { return device; }
+      VkSurfaceKHR getSurface() { return surface; }
+      VkQueue getGraphicsQueue() { return graphicsQueue; }
+      VkQueue getPresentQueue() { return presentQueue; }
+      VkQueue getComputeQueue() { return computeQueue; }
 
       // ImGui methods
       ImGui_ImplVulkan_InitInfo getImGuiInitInfo(VkDescriptorPool descriptorPool, uint32_t imageCount);
@@ -65,7 +65,8 @@ namespace lth {
       void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
       void copyBufferToImage(
           VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layerCount);
-  
+      void buildAccelerationStructure(const VkAccelerationStructureBuildGeometryInfoKHR& asBuildGeometryInfo, const VkAccelerationStructureBuildRangeInfoKHR& asBuildRangeInfo);
+
       // Image generation methods
       void createImage(uint32_t width,
           uint32_t height,
@@ -112,10 +113,21 @@ namespace lth {
       VkPhysicalDeviceAccelerationStructurePropertiesKHR accelStructProperties{
           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR };
 
-      VkPhysicalDeviceFeatures2 physicalDeviceFeatures{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
+      
+      VkPhysicalDeviceFeatures2 physicalDeviceFeatures2{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
+      VkPhysicalDeviceVulkan12Features physicalDeviceFeatures1_2{
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES };
       VkPhysicalDeviceRayTracingPipelineFeaturesKHR rayTracingFeatures{
         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR };
       VkPhysicalDeviceAccelerationStructureFeaturesKHR accelStructFeatures{
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR };
+
+      VkPhysicalDeviceFeatures2 physicalDeviceFeatures2_Get{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
+      VkPhysicalDeviceVulkan12Features physicalDeviceFeatures1_2_Get{
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES };
+      VkPhysicalDeviceRayTracingPipelineFeaturesKHR rayTracingFeatures_Get{
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR };
+      VkPhysicalDeviceAccelerationStructureFeaturesKHR accelStructFeatures_Get{
         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR };
 
      private:
@@ -145,9 +157,9 @@ namespace lth {
       VkCommandPool commandPool;
 
 
-      VkDevice _device;
-      VkSurfaceKHR _surface;
-      VkQueue _graphicsQueue, _presentQueue, _computeQueue;
+      VkDevice device;
+      VkSurfaceKHR surface;
+      VkQueue graphicsQueue, presentQueue, computeQueue;
 
       VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
     };

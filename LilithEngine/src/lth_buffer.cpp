@@ -48,8 +48,8 @@ namespace lth {
 
     LthBuffer::~LthBuffer() {
         unmap();
-        vkDestroyBuffer(lthDevice.device(), buffer, nullptr);
-        vkFreeMemory(lthDevice.device(), memory, nullptr);
+        vkDestroyBuffer(lthDevice.getDevice(), buffer, nullptr);
+        vkFreeMemory(lthDevice.getDevice(), memory, nullptr);
     }
 
     /**
@@ -63,7 +63,7 @@ namespace lth {
      */
     VkResult LthBuffer::map(VkDeviceSize size, VkDeviceSize offset) {
         assert(buffer && memory && "Called map on buffer before create");
-        return vkMapMemory(lthDevice.device(), memory, offset, size, 0, &mapped);
+        return vkMapMemory(lthDevice.getDevice(), memory, offset, size, 0, &mapped);
     }
 
     /**
@@ -73,7 +73,7 @@ namespace lth {
      */
     void LthBuffer::unmap() {
         if (mapped) {
-            vkUnmapMemory(lthDevice.device(), memory);
+            vkUnmapMemory(lthDevice.getDevice(), memory);
             mapped = nullptr;
         }
     }
@@ -117,7 +117,7 @@ namespace lth {
         mappedRange.memory = memory;
         mappedRange.offset = offset;
         mappedRange.size = size;
-        return vkFlushMappedMemoryRanges(lthDevice.device(), 1, &mappedRange);
+        return vkFlushMappedMemoryRanges(lthDevice.getDevice(), 1, &mappedRange);
     }
 
     /**
@@ -137,7 +137,7 @@ namespace lth {
         mappedRange.memory = memory;
         mappedRange.offset = offset;
         mappedRange.size = size;
-        return vkInvalidateMappedMemoryRanges(lthDevice.device(), 1, &mappedRange);
+        return vkInvalidateMappedMemoryRanges(lthDevice.getDevice(), 1, &mappedRange);
     }
 
     /**

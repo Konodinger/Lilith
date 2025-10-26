@@ -3,6 +3,7 @@
 
 #include "lth_device.hpp"
 #include "lth_buffer.hpp"
+#include "lth_acceleration_structure.hpp"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -31,6 +32,7 @@ namespace lth {
 		};
 
 		struct Builder {
+			std::vector<glm::vec3> positions{};
 			std::vector<Vertex> vertices{};
 			std::vector<uint32_t> indices{};
 
@@ -48,17 +50,26 @@ namespace lth {
 		void bind(VkCommandBuffer commandBuffer);
 		void draw(VkCommandBuffer commandBuffer);
 	private:
-		void createVertexBuffers(const std::vector<Vertex>& vertices);
-		void createIndexBuffers(const std::vector<uint32_t>& indices);
+		void createVertexBuffer(const std::vector<Vertex>& vertices);
+		void createPositionBuffer(const std::vector<glm::vec3>& positions);
+		void createIndexBuffer(const std::vector<uint32_t>& indices);
+		void createASGeometry(const Builder& builder);
+		void createBLAS();
 
 		LthDevice& lthDevice;
 		
 		std::unique_ptr<LthBuffer> vertexBuffer;
 		uint32_t vertexCount;
 
+		std::unique_ptr<LthBuffer> positionBuffer;
+
 		bool hasIndexBuffer = false;
 		std::unique_ptr<LthBuffer> indexBuffer;
 		uint32_t indexCount;
+
+		VkAccelerationStructureGeometryKHR asGeometry;
+		VkAccelerationStructureBuildRangeInfoKHR asBuildRangeInfo;
+		AccelerationStructure accStruct{};
 	};
 }
 

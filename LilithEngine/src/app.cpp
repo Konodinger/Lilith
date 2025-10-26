@@ -155,7 +155,7 @@ namespace lth {
 			}
         }
 
-		vkDeviceWaitIdle(lthDevice.device());
+		vkDeviceWaitIdle(lthDevice.getDevice());
 	}
 
     // Update the component of the scene according to the different inputs.
@@ -341,6 +341,9 @@ namespace lth {
 
         ImGui_ImplGlfw_InitForVulkan(lthWindow.getGLFWwindow(), true);
 
+        ImGui_ImplVulkan_LoadFunctions([](const char* function_name, void* vulkan_instance) {
+            return vkGetInstanceProcAddr(*(reinterpret_cast<VkInstance*>(vulkan_instance)), function_name);
+            }, (void *) &lthDevice.getInstance());
         ImGui_ImplVulkan_InitInfo initInfo = lthDevice.getImGuiInitInfo(generalDescriptorPool->getDescriptorPool(), static_cast<uint32_t>(lthRenderer.getSwapChainImageCount()));
         ImGui_ImplVulkan_Init(&initInfo, lthRenderer.getSwapChainRenderPass());
 

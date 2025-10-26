@@ -44,7 +44,7 @@ namespace lth {
         descriptorSetLayoutInfo.pBindings = setLayoutBindings.data();
 
         if (vkCreateDescriptorSetLayout(
-            lthDevice.device(),
+            lthDevice.getDevice(),
             &descriptorSetLayoutInfo,
             nullptr,
             &descriptorSetLayout) != VK_SUCCESS) {
@@ -53,7 +53,7 @@ namespace lth {
     }
 
     LthDescriptorSetLayout::~LthDescriptorSetLayout() {
-        vkDestroyDescriptorSetLayout(lthDevice.device(), descriptorSetLayout, nullptr);
+        vkDestroyDescriptorSetLayout(lthDevice.getDevice(), descriptorSetLayout, nullptr);
     }
 
     // *************** Descriptor Pool Builder *********************
@@ -93,14 +93,14 @@ namespace lth {
         descriptorPoolInfo.maxSets = maxSets;
         descriptorPoolInfo.flags = poolFlags;
 
-        if (vkCreateDescriptorPool(lthDevice.device(), &descriptorPoolInfo, nullptr, &descriptorPool) !=
+        if (vkCreateDescriptorPool(lthDevice.getDevice(), &descriptorPoolInfo, nullptr, &descriptorPool) !=
             VK_SUCCESS) {
             throw std::runtime_error("Failed to create descriptor pool!");
         }
     }
 
     LthDescriptorPool::~LthDescriptorPool() {
-        vkDestroyDescriptorPool(lthDevice.device(), descriptorPool, nullptr);
+        vkDestroyDescriptorPool(lthDevice.getDevice(), descriptorPool, nullptr);
     }
 
     bool LthDescriptorPool::allocateDescriptorSets(
@@ -116,7 +116,7 @@ namespace lth {
 
         // Might want to create a "DescriptorPoolManager" class that handles this case, and builds
         // a new pool whenever an old pool fills up. But this is beyond our current scope.
-        if (vkAllocateDescriptorSets(lthDevice.device(), &allocInfo, &descriptor) != VK_SUCCESS) {
+        if (vkAllocateDescriptorSets(lthDevice.getDevice(), &allocInfo, &descriptor) != VK_SUCCESS) {
             return false;
         }
         return true;
@@ -124,14 +124,14 @@ namespace lth {
 
     void LthDescriptorPool::freeDescriptors(std::vector<VkDescriptorSet>& descriptors) const {
         vkFreeDescriptorSets(
-            lthDevice.device(),
+            lthDevice.getDevice(),
             descriptorPool,
             static_cast<uint32_t>(descriptors.size()),
             descriptors.data());
     }
 
     void LthDescriptorPool::resetPool() {
-        vkResetDescriptorPool(lthDevice.device(), descriptorPool, 0);
+        vkResetDescriptorPool(lthDevice.getDevice(), descriptorPool, 0);
     }
 
     // *************** Descriptor Writer *********************
@@ -196,7 +196,7 @@ namespace lth {
         for (auto& write : writes) {
             write.dstSet = set;
         }
-        vkUpdateDescriptorSets(pool.lthDevice.device(), static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
+        vkUpdateDescriptorSets(pool.lthDevice.getDevice(), static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
     }
 
 }

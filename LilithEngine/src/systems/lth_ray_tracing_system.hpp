@@ -13,7 +13,7 @@ namespace lth {
 			VkRenderPass renderPass,
 			DescriptorSetLayouts& setLayouts) : LthSystem(device, renderPass, setLayouts) {};
 		~LthRayTracingSystem() {
-			vkDestroyPipelineLayout(lthDevice.device(), graphicsPipelineLayout, nullptr);
+			vkDestroyPipelineLayout(lthDevice.getDevice(), graphicsPipelineLayout, nullptr);
 		}
 
 		virtual void createPipeline(VkRenderPass renderPass) = 0;

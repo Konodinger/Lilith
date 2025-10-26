@@ -4,7 +4,6 @@
 #include "lth_camera.hpp"
 #include "gameObjects/lth_game_object.hpp"
 
-#include <vulkan/vulkan.h>
 
 #define MAX_LIGHTS 8
 

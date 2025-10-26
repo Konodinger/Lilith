@@ -10,8 +10,6 @@
 #include "keyboard_movement_control.hpp"
 #include "gameObjects/lth_game_object.hpp"
 
-#include "imgui.h"
-
 #include <memory>
 #include <vector>
 #include <chrono>

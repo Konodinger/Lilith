@@ -24,7 +24,7 @@ namespace lth {
 			glfwWaitEvents();
 		}
 
-		vkDeviceWaitIdle(lthDevice.device());
+		vkDeviceWaitIdle(lthDevice.getDevice());
 
 		if (lthSwapChain == nullptr) {
 			lthSwapChain = std::make_unique<LthSwapChain>(lthDevice, extent);
@@ -52,14 +52,14 @@ namespace lth {
 		allocInfo.commandPool = lthDevice.getCommandPool();
 		allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
 
-		if (vkAllocateCommandBuffers(lthDevice.device(), &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
+		if (vkAllocateCommandBuffers(lthDevice.getDevice(), &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to allocate command buffers!");
 		}
 	};
 
 	void LthRenderer::freeCommandBuffers(std::vector<VkCommandBuffer>& commandBuffers) {
 		vkFreeCommandBuffers(
-			lthDevice.device(),
+			lthDevice.getDevice(),
 			lthDevice.getCommandPool(),
 			static_cast<uint32_t>(commandBuffers.size()),
 			commandBuffers.data());

@@ -23,11 +23,20 @@ namespace std {
 namespace lth {
 
 	LthModel::LthModel(LthDevice& device, const LthModel::Builder &builder) : lthDevice{ device } {
-		createVertexBuffers(builder.vertices);
-		createIndexBuffers(builder.indices);
+		createVertexBuffer(builder.vertices);
+		createIndexBuffer(builder.indices);
+
+		// Ray tracing part
+		createPositionBuffer(builder.positions);
+		createASGeometry(builder);
+		createBLAS();
 	}
 
-	LthModel::~LthModel() {}
+	LthModel::~LthModel() {
+		if (accStruct.handle) {
+			vkDestroyAccelerationStructureKHR(lthDevice.getDevice(), accStruct.handle, nullptr);
+		}
+	}
 
 	bool LthModel::Builder::loadModel(const std::string& filePath) {
 		tinyobj::attrib_t attrib;
@@ -40,6 +49,7 @@ namespace lth {
 			return false;
 		}
 
+		positions.clear();
 		vertices.clear();
 		indices.clear();
 
@@ -80,6 +90,7 @@ namespace lth {
 
 				if (uniqueVertices.count(vertex) == 0) {
 					uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
+					positions.push_back(vertex.position);
 					vertices.push_back(vertex);
 				}
 
@@ -96,7 +107,7 @@ namespace lth {
 		return std::make_unique<LthModel>(device, builder);
 	}
 
-	void LthModel::createVertexBuffers(const std::vector<Vertex>& vertices) {
+	void LthModel::createVertexBuffer(const std::vector<Vertex>& vertices) {
 		vertexCount = static_cast<uint32_t>(vertices.size());
 		assert(vertexCount >= 3 && "Vertex count must be at least 3");
 		VkDeviceSize bufferSize = sizeof(vertices[0]) * vertexCount;
@@ -123,7 +134,34 @@ namespace lth {
 		lthDevice.copyBuffer(stagingBuffer.getBuffer(), vertexBuffer->getBuffer(), bufferSize);
 	}
 
-	void LthModel::createIndexBuffers(const std::vector<uint32_t>& indices) {
+	void LthModel::createPositionBuffer(const std::vector<glm::vec3>& positions) {
+		uint32_t positionCount = static_cast<uint32_t>(positions.size());
+		assert(positionCount >= 3 && "Positioncount must be at least 3");
+		VkDeviceSize bufferSize = sizeof(positions[0]) * positionCount;
+		uint32_t positionSize = sizeof(positions[0]);
+
+		LthBuffer stagingBuffer{
+			lthDevice,
+			positionSize,
+			positionCount,
+			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		};
+
+		stagingBuffer.map();
+		stagingBuffer.writeToBuffer((void*)positions.data());
+
+		positionBuffer = std::make_unique<LthBuffer>(
+			lthDevice,
+			positionSize,
+			positionCount,
+			VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+		lthDevice.copyBuffer(stagingBuffer.getBuffer(), positionBuffer->getBuffer(), bufferSize);
+	}
+
+	void LthModel::createIndexBuffer(const std::vector<uint32_t>& indices) {
 		indexCount = static_cast<uint32_t>(indices.size());
 
 		hasIndexBuffer = (indexCount > 0);
@@ -148,10 +186,120 @@ namespace lth {
 			lthDevice,
 			indexSize,
 			indexCount,
-			VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+			VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT
+			| VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 		lthDevice.copyBuffer(stagingBuffer.getBuffer(), indexBuffer->getBuffer(), stagingBuffer.getBufferSize());
+	}
+
+	void LthModel::createASGeometry(const Builder& builder) {
+		if (!positionBuffer || !indexBuffer) {
+			throw std::runtime_error("AS geometry cannot be created if the model buffers are not set correctly.");
+		}
+
+		VkBufferDeviceAddressInfo positionBufferDeviceAddressInfo{
+			.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+			.pNext = nullptr,
+			.buffer = positionBuffer->getBuffer(),
+		};
+
+		auto positionBufferDeviceAddress = vkGetBufferDeviceAddress(lthDevice.getDevice(), &positionBufferDeviceAddressInfo);
+
+		VkBufferDeviceAddressInfo indexBufferDeviceAddressInfo{
+			.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+			.pNext = nullptr,
+			.buffer = indexBuffer->getBuffer(),
+		};
+
+		auto indexBufferDeviceAddress = vkGetBufferDeviceAddress(lthDevice.getDevice(), &indexBufferDeviceAddressInfo);
+
+		VkAccelerationStructureGeometryTrianglesDataKHR triangles{
+		.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR,
+		.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT,
+		.vertexData = {.deviceAddress = positionBufferDeviceAddress},
+		.vertexStride = sizeof(glm::vec3),
+		.maxVertex = vertexCount - 1,
+		.indexType = VK_INDEX_TYPE_UINT32,
+		.indexData = {.deviceAddress = indexBufferDeviceAddress},
+		};
+
+		asGeometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+		asGeometry.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
+		asGeometry.geometry = { .triangles = triangles };
+		asGeometry.flags = VK_GEOMETRY_NO_DUPLICATE_ANY_HIT_INVOCATION_BIT_KHR | VK_GEOMETRY_OPAQUE_BIT_KHR;
+
+		asBuildRangeInfo.primitiveCount = indexCount / 3;
+		asBuildRangeInfo.primitiveOffset = 0;
+		asBuildRangeInfo.firstVertex = 0;
+		asBuildRangeInfo.transformOffset = 0;
+	}
+
+	void LthModel::createBLAS() {
+		VkAccelerationStructureBuildGeometryInfoKHR accelerationStructureBuildGeometryInfo{};
+		accelerationStructureBuildGeometryInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
+		accelerationStructureBuildGeometryInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
+		accelerationStructureBuildGeometryInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
+		accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+		accelerationStructureBuildGeometryInfo.geometryCount = 1;
+		accelerationStructureBuildGeometryInfo.pGeometries = &asGeometry;
+
+		VkAccelerationStructureBuildSizesInfoKHR accelerationStructureBuildSizesInfo{};
+		accelerationStructureBuildSizesInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
+
+		vkGetAccelerationStructureBuildSizesKHR(
+			lthDevice.getDevice(),
+			VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
+			&accelerationStructureBuildGeometryInfo,
+			&asBuildRangeInfo.primitiveCount,
+			&accelerationStructureBuildSizesInfo);
+
+		uint32_t scratchOffsetAlignment = lthDevice.accelStructProperties.minAccelerationStructureScratchOffsetAlignment;
+		VkDeviceSize scratchSize = ((accelerationStructureBuildSizesInfo.buildScratchSize + scratchOffsetAlignment - 1) & ~(scratchOffsetAlignment - 1));
+
+		LthBuffer scratchBuffer{
+			lthDevice,
+			scratchSize,
+			1,
+			VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			scratchOffsetAlignment
+		};
+
+		VkBufferDeviceAddressInfo scratchBufferDeviceAddressInfo{
+			.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+			.pNext = nullptr,
+			.buffer = scratchBuffer.getBuffer(),
+		};
+
+		auto scratchBufferDeviceAddress = vkGetBufferDeviceAddress(lthDevice.getDevice(), &scratchBufferDeviceAddressInfo);
+
+		accStruct.buffer = std::make_unique<LthBuffer>(
+			lthDevice,
+			accelerationStructureBuildSizesInfo.accelerationStructureSize,
+			1,
+			VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+		VkAccelerationStructureCreateInfoKHR accelerationStructureCreateInfo{};
+		accelerationStructureCreateInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
+		accelerationStructureCreateInfo.buffer = accStruct.buffer->getBuffer();
+		accelerationStructureCreateInfo.size = accelerationStructureBuildSizesInfo.accelerationStructureSize;
+		accelerationStructureCreateInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
+
+		vkCreateAccelerationStructureKHR(lthDevice.getDevice(), &accelerationStructureCreateInfo, nullptr, &accStruct.handle);
+
+		accelerationStructureBuildGeometryInfo.dstAccelerationStructure = accStruct.handle;
+		accelerationStructureBuildGeometryInfo.scratchData.deviceAddress = scratchBufferDeviceAddress;
+
+		lthDevice.buildAccelerationStructure(accelerationStructureBuildGeometryInfo, asBuildRangeInfo);
+
+		VkAccelerationStructureDeviceAddressInfoKHR accelerationDeviceAddressInfo{};
+		accelerationDeviceAddressInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
+		accelerationDeviceAddressInfo.accelerationStructure = accStruct.handle;
+
+		accStruct.deviceAddress =
+			vkGetAccelerationStructureDeviceAddressKHR(lthDevice.getDevice(), &accelerationDeviceAddressInfo);
 	}
 
 	void LthModel::draw(VkCommandBuffer commandBuffer) {

@@ -80,8 +80,23 @@ namespace lth {
         rayTracingProperties.pNext = &accelStructProperties;
         physicalDeviceProperties.pNext = &rayTracingProperties;
 
+        accelStructFeatures.accelerationStructure = VK_TRUE;
         rayTracingFeatures.pNext = &accelStructFeatures;
-        physicalDeviceFeatures.pNext = &rayTracingFeatures;
+        rayTracingFeatures.rayTracingPipeline = VK_TRUE;
+        physicalDeviceFeatures1_2.pNext = &rayTracingFeatures;
+        physicalDeviceFeatures1_2.bufferDeviceAddress = VK_TRUE;
+        physicalDeviceFeatures2.pNext = &physicalDeviceFeatures1_2;
+        physicalDeviceFeatures2.features.samplerAnisotropy = VK_TRUE;
+        physicalDeviceFeatures2.features.sampleRateShading = VK_TRUE;
+
+        rayTracingFeatures_Get.pNext = &accelStructFeatures_Get;
+        physicalDeviceFeatures1_2_Get.pNext = &rayTracingFeatures_Get;
+        physicalDeviceFeatures2_Get.pNext = &physicalDeviceFeatures1_2_Get;
+
+        if (volkInitialize() != VK_SUCCESS) {
+            throw std::runtime_error("Failed to initialize Volk!");
+        }
+
       createInstance();
       setupDebugMessenger();
       createSurface();
@@ -91,14 +106,14 @@ namespace lth {
     }
 
     LthDevice::~LthDevice() {
-      vkDestroyCommandPool(_device, commandPool, nullptr);
-      vkDestroyDevice(_device, nullptr);
+      vkDestroyCommandPool(device, commandPool, nullptr);
+      vkDestroyDevice(device, nullptr);
 
       if (LTH_ENABLE_VALIDATION_LAYERS) {
         DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
       }
 
-      vkDestroySurfaceKHR(instance, _surface, nullptr);
+      vkDestroySurfaceKHR(instance, surface, nullptr);
       vkDestroyInstance(instance, nullptr);
     }
 
@@ -146,6 +161,8 @@ namespace lth {
       if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create instance!");
       }
+
+      volkLoadInstanceOnly(instance);
 
       hasGflwRequiredInstanceExtensions();
     }
@@ -196,17 +213,14 @@ namespace lth {
         queueCreateInfos.push_back(queueCreateInfo);
       }
 
-      VkPhysicalDeviceFeatures deviceFeatures{};
-      deviceFeatures.samplerAnisotropy = VK_TRUE;
-      deviceFeatures.sampleRateShading = VK_TRUE;
-
       VkDeviceCreateInfo createInfo{};
       createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 
       createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
       createInfo.pQueueCreateInfos = queueCreateInfos.data();
 
-      createInfo.pEnabledFeatures = &deviceFeatures;
+      createInfo.pNext = &physicalDeviceFeatures2;
+      createInfo.pEnabledFeatures = nullptr; //legacy, not adapted to extension features.
       createInfo.enabledExtensionCount = static_cast<uint32_t>(LTH_DEVICE_EXTENSIONS_LIST.size());
       createInfo.ppEnabledExtensionNames = LTH_DEVICE_EXTENSIONS_LIST.data();
 
@@ -219,13 +233,15 @@ namespace lth {
         createInfo.enabledLayerCount = 0;
       }
 
-      if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &_device) != VK_SUCCESS) {
+      if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create logical device!");
       }
 
-      vkGetDeviceQueue(_device, indices.graphicsAndComputeFamily, 0, &_graphicsQueue);
-      vkGetDeviceQueue(_device, indices.presentFamily, 0, &_presentQueue);
-      vkGetDeviceQueue(_device, indices.graphicsAndComputeFamily, 0, &_computeQueue);
+      volkLoadDevice(device);
+
+      vkGetDeviceQueue(device, indices.graphicsAndComputeFamily, 0, &graphicsQueue);
+      vkGetDeviceQueue(device, indices.presentFamily, 0, &presentQueue);
+      vkGetDeviceQueue(device, indices.graphicsAndComputeFamily, 0, &computeQueue);
     }
 
     void LthDevice::createCommandPool() {
@@ -237,12 +253,12 @@ namespace lth {
       poolInfo.flags =
           VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-      if (vkCreateCommandPool(_device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
+      if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create command pool!");
       }
     }
 
-    void LthDevice::createSurface() { window.createWindowSurface(instance, &_surface); }
+    void LthDevice::createSurface() { window.createWindowSurface(instance, &surface); }
 
     bool LthDevice::isDeviceSuitable(VkPhysicalDevice device) {
       QueueFamilyIndices indices = findQueueFamilies(device);
@@ -255,10 +271,10 @@ namespace lth {
         swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
       }
 
-      vkGetPhysicalDeviceFeatures2(device, &physicalDeviceFeatures);
+      vkGetPhysicalDeviceFeatures2(device, &physicalDeviceFeatures2_Get);
 
       return indices.isComplete() && extensionsSupported && swapChainAdequate &&
-          physicalDeviceFeatures.features.samplerAnisotropy;
+          physicalDeviceFeatures2_Get.features.samplerAnisotropy;
     }
 
     void LthDevice::populateDebugMessengerCreateInfo(
@@ -382,7 +398,7 @@ namespace lth {
           indices.graphicsAndComputeFamilyHasValue = true;
         }
         VkBool32 presentSupport = false;
-        vkGetPhysicalDeviceSurfaceSupportKHR(device, i, _surface, &presentSupport);
+        vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
         if (queueFamily.queueCount > 0 && presentSupport) {
           indices.presentFamily = i;
           indices.presentFamilyHasValue = true;
@@ -399,24 +415,24 @@ namespace lth {
 
     SwapChainSupportDetails LthDevice::querySwapChainSupport(VkPhysicalDevice device) {
       SwapChainSupportDetails details;
-      vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, _surface, &details.capabilities);
+      vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
 
       uint32_t formatCount;
-      vkGetPhysicalDeviceSurfaceFormatsKHR(device, _surface, &formatCount, nullptr);
+      vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
 
       if (formatCount != 0) {
         details.formats.resize(formatCount);
-        vkGetPhysicalDeviceSurfaceFormatsKHR(device, _surface, &formatCount, details.formats.data());
+        vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, details.formats.data());
       }
 
       uint32_t presentModeCount;
-      vkGetPhysicalDeviceSurfacePresentModesKHR(device, _surface, &presentModeCount, nullptr);
+      vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
 
       if (presentModeCount != 0) {
         details.presentModes.resize(presentModeCount);
         vkGetPhysicalDeviceSurfacePresentModesKHR(
             device,
-            _surface,
+            surface,
             &presentModeCount,
             details.presentModes.data());
       }
@@ -443,11 +459,11 @@ namespace lth {
         ImGui_ImplVulkan_InitInfo initInfo{};
         initInfo.Instance = instance;
         initInfo.PhysicalDevice = physicalDevice;
-        initInfo.Device = _device;
+        initInfo.Device = device;
         QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
         assert(queueFamilyIndices.graphicsAndComputeFamilyHasValue && "Error: could not init ImGui, graphics queue has no family!");
         initInfo.QueueFamily = queueFamilyIndices.graphicsAndComputeFamily;
-        initInfo.Queue = _graphicsQueue;
+        initInfo.Queue = graphicsQueue;
         initInfo.PipelineCache = VK_NULL_HANDLE;
         initInfo.DescriptorPool = descriptorPool;
         initInfo.Allocator = nullptr;
@@ -482,23 +498,28 @@ namespace lth {
       bufferInfo.usage = usage;
       bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-      if (vkCreateBuffer(_device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
+      if (vkCreateBuffer(device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create buffer!");
       }
 
       VkMemoryRequirements memRequirements;
-      vkGetBufferMemoryRequirements(_device, buffer, &memRequirements);
+      vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
+
+      VkMemoryAllocateFlagsInfo allocFlagsInfo{};
+      allocFlagsInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO;
+      allocFlagsInfo.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
 
       VkMemoryAllocateInfo allocInfo{};
       allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+      allocInfo.pNext = &allocFlagsInfo;
       allocInfo.allocationSize = memRequirements.size;
       allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
 
-      if (vkAllocateMemory(_device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
+      if (vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
         throw std::runtime_error("Failed to allocate buffer memory!");
       }
 
-      vkBindBufferMemory(_device, buffer, bufferMemory, 0);
+      vkBindBufferMemory(device, buffer, bufferMemory, 0);
     }
 
     VkCommandBuffer LthDevice::beginSingleTimeCommands() {
@@ -509,7 +530,7 @@ namespace lth {
       allocInfo.commandBufferCount = 1;
 
       VkCommandBuffer commandBuffer;
-      if (vkAllocateCommandBuffers(_device, &allocInfo, &commandBuffer) != VK_SUCCESS) {
+      if (vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer) != VK_SUCCESS) {
         throw std::runtime_error("Failed to allocate command buffers!");
     }
 
@@ -531,10 +552,10 @@ namespace lth {
       submitInfo.commandBufferCount = 1;
       submitInfo.pCommandBuffers = &commandBuffer;
 
-      vkQueueSubmit(_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-      vkQueueWaitIdle(_graphicsQueue);
+      vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+      vkQueueWaitIdle(graphicsQueue);
 
-      vkFreeCommandBuffers(_device, commandPool, 1, &commandBuffer);
+      vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
     }
 
     void LthDevice::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
@@ -576,6 +597,19 @@ namespace lth {
       endSingleTimeCommands(commandBuffer);
     }
 
+
+    void LthDevice::buildAccelerationStructure(const VkAccelerationStructureBuildGeometryInfoKHR &asBuildGeometryInfo, const VkAccelerationStructureBuildRangeInfoKHR& asBuildRangeInfo) {
+        VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+        auto asBuildRangeInfos = { &asBuildRangeInfo };
+        vkCmdBuildAccelerationStructuresKHR(
+            commandBuffer,
+            1,
+            &asBuildGeometryInfo,
+            asBuildRangeInfos.begin());
+
+        endSingleTimeCommands(commandBuffer);
+    }
+
     void LthDevice::createImage(uint32_t width,
         uint32_t height,
         VkFormat format,
@@ -610,23 +644,23 @@ namespace lth {
         VkMemoryPropertyFlags properties,
         VkImage& image,
         VkDeviceMemory& imageMemory) {
-      if (vkCreateImage(_device, &imageInfo, nullptr, &image) != VK_SUCCESS) {
+      if (vkCreateImage(device, &imageInfo, nullptr, &image) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create image!");
       }
 
       VkMemoryRequirements memRequirements;
-      vkGetImageMemoryRequirements(_device, image, &memRequirements);
+      vkGetImageMemoryRequirements(device, image, &memRequirements);
 
       VkMemoryAllocateInfo allocInfo{};
       allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
       allocInfo.allocationSize = memRequirements.size;
       allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
 
-      if (vkAllocateMemory(_device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
+      if (vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
         throw std::runtime_error("Failed to allocate image memory!");
       }
 
-      if (vkBindImageMemory(_device, image, imageMemory, 0) != VK_SUCCESS) {
+      if (vkBindImageMemory(device, image, imageMemory, 0) != VK_SUCCESS) {
         throw std::runtime_error("Failed to bind image memory!");
       }
     }
@@ -720,7 +754,7 @@ namespace lth {
         viewInfo.subresourceRange.layerCount = 1;
 
         VkImageView imageView;
-        if (vkCreateImageView(_device, &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
+        if (vkCreateImageView(device, &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
             throw std::runtime_error("Failed to create texture image view!");
         }
 

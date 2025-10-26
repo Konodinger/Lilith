@@ -4,8 +4,6 @@
 #include "lth_global_info.hpp"
 #include "lth_device.hpp"
 
-#include <vulkan/vulkan.h>
-
 #include <string>
 #include <vector>
 #include <memory>

@@ -16,9 +16,9 @@ namespace lth {
 		createGraphicsPipeline(configInfo, vertFilePath, fragFilePath);
 	}
 	LthGraphicsPipeline::~LthGraphicsPipeline() {
-		vkDestroyShaderModule(lthDevice.device(), vertShaderModule, nullptr);
-		vkDestroyShaderModule(lthDevice.device(), fragShaderModule, nullptr);
-		vkDestroyPipeline(lthDevice.device(), graphicsPipeline, nullptr);
+		vkDestroyShaderModule(lthDevice.getDevice(), vertShaderModule, nullptr);
+		vkDestroyShaderModule(lthDevice.getDevice(), fragShaderModule, nullptr);
+		vkDestroyPipeline(lthDevice.getDevice(), graphicsPipeline, nullptr);
 	}
 
 	void LthGraphicsPipeline::bind(VkCommandBuffer commandBuffer) {
@@ -170,7 +170,7 @@ namespace lth {
 		pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
 		if (vkCreateGraphicsPipelines(
-			lthDevice.device(),
+			lthDevice.getDevice(),
 			VK_NULL_HANDLE,
 			1,
 			&pipelineInfo,

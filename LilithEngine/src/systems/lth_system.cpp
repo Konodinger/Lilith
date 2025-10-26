@@ -14,7 +14,7 @@ namespace lth {
 		pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
 		pipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32_t>(pushConstantRanges.size());
 		pipelineLayoutInfo.pPushConstantRanges = pushConstantRanges.data();
-		if (vkCreatePipelineLayout(lthDevice.device(), &pipelineLayoutInfo, nullptr, pipelineLayout) != VK_SUCCESS) {
+		if (vkCreatePipelineLayout(lthDevice.getDevice(), &pipelineLayoutInfo, nullptr, pipelineLayout) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to create pipeline layout!");
 		}
 	}
