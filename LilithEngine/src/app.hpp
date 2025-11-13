@@ -7,6 +7,7 @@
 #include "lth_renderer.hpp"
 #include "lth_descriptors.hpp"
 #include "lth_texture.hpp"
+#include "lth_scene.hpp"
 #include "keyboard_movement_control.hpp"
 #include "gameObjects/lth_game_object.hpp"
 
@@ -26,13 +27,11 @@ namespace lth {
 		App& operator=(const App&) = delete;
 
 		void run();
-		uint32_t loadTexture(const std::string& textureName);
 		inline float getAppTimer() { return std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startingTime).count(); };
 
 	private:
 
-		void loadGameObjects();
-		void loadTextures();
+		void loadScene();
 		void createDescriptorSets();
 		void initImGui();
 
@@ -49,14 +48,10 @@ namespace lth {
 		std::vector<VkDescriptorSet> globalDescriptorSets{};
 		std::vector<VkDescriptorSet> computeDescriptorSets{};
 
-		LthGameObject::Map gameObjects;
-
-		std::vector<std::unique_ptr<LthTexture>> textureArray{};
-		uint32_t textureArrayCount = 0;
-		std::unique_ptr<LthTexture> defaultTexture;
+		LthScene scene{ lthDevice };
 
 		KeyboardMovementController cameraController;
-		LthGameObject viewerObject;
+		Transform viewerTransform;
 
 		const std::chrono::steady_clock::time_point startingTime;
 		std::chrono::steady_clock::time_point currentTime{};

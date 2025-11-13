@@ -22,7 +22,7 @@ namespace std {
 
 namespace lth {
 
-	LthModel::LthModel(LthDevice& device, const LthModel::Builder &builder) : lthDevice{ device } {
+	LthModel::LthModel(id_t modId, LthDevice& device, const LthModel::Builder &builder) : LthSceneElement(modId), lthDevice{ device } {
 		createVertexBuffer(builder.vertices);
 		createIndexBuffer(builder.indices);
 
@@ -100,11 +100,10 @@ namespace lth {
 		return true;
 	}
 
-	std::unique_ptr<LthModel> LthModel::createModelFromFile(LthDevice& device, const std::string& filePath) {
+	std::shared_ptr<LthModel> LthModel::createModelFromFile(id_t modId, LthDevice& device, const std::string& filePath) {
 		Builder builder{};
 		builder.loadModel(filePath);
-
-		return std::make_unique<LthModel>(device, builder);
+		return std::shared_ptr<LthModel>(new LthModel(modId, device, builder));
 	}
 
 	void LthModel::createVertexBuffer(const std::vector<Vertex>& vertices) {

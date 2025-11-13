@@ -56,13 +56,13 @@ namespace lth {
 			0,
 			nullptr);
 
-		for (auto& keyValue : frameInfo.gameObjects) {
+		for (auto& keyValue : frameInfo.scene.gameObjects()) {
 			auto& obj = keyValue.second;
-			if (obj.model == nullptr) continue;
+			if (obj->model == nullptr) continue;
 
 			SimplePushConstantData push{};
-			push.modelMatrix = obj.transform.modelMatrix();
-			push.normalMatrix = obj.transform.normalMatrix();
+			push.modelMatrix = obj->transform.modelMatrix();
+			push.normalMatrix = obj->transform.normalMatrix();
 
 			vkCmdPushConstants(
 				frameInfo.graphicsCommandBuffer,
@@ -78,12 +78,12 @@ namespace lth {
 				graphicsPipelineLayout,
 				1,
 				1,
-				&obj.gameObjectDescriptorSets[frameInfo.frameIndex],
+				&obj->gameObjectDescriptorSets[frameInfo.frameIndex],
 				0,
 				nullptr);
 
-			obj.model->bind(frameInfo.graphicsCommandBuffer);
-			obj.model->draw(frameInfo.graphicsCommandBuffer);
+			obj->model->bind(frameInfo.graphicsCommandBuffer);
+			obj->model->draw(frameInfo.graphicsCommandBuffer);
 		}
 	}
 }

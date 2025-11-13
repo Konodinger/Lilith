@@ -7,8 +7,8 @@
 
 namespace lth {
 
-	LthTexture::LthTexture(LthDevice& device, const LthTexture::Builder& builder, bool generateMipMaps) :
-		lthDevice{ device }, texWidth{ static_cast<uint32_t>(builder.texWidth) }, texHeight{ static_cast<uint32_t>(builder.texHeight) },
+	LthTexture::LthTexture(id_t texId, LthDevice& device, const LthTexture::Builder& builder, bool generateMipMaps) :
+		LthSceneElement(texId), lthDevice{ device }, texWidth{ static_cast<uint32_t>(builder.texWidth) }, texHeight{ static_cast<uint32_t>(builder.texHeight) },
 		pixelSize{ builder.pixelSize }, texFormat{ builder.texFormat } {
 		
 
@@ -40,11 +40,18 @@ namespace lth {
 		return true;
 	}
 
-	std::unique_ptr<LthTexture> LthTexture::createTextureFromFile(LthDevice& device, const std::string& filePath, bool generateMipmaps) {
+	std::unique_ptr<LthTexture> LthTexture::createUniqueTextureFromFile(id_t texId, LthDevice& device, const std::string& filePath, bool generateMipmaps) {
 		Builder builder{};
 		builder.loadTexture(filePath);
 
-		return std::make_unique<LthTexture>(device, builder, generateMipmaps);
+		return std::make_unique<LthTexture>(texId, device, builder, generateMipmaps);
+	}
+
+	std::shared_ptr<LthTexture> LthTexture::createTextureFromFile(id_t texId, LthDevice& device, const std::string& filePath, bool generateMipmaps) {
+		Builder builder{};
+		builder.loadTexture(filePath);
+
+		return std::make_shared<LthTexture>(texId, device, builder, generateMipmaps);
 	}
 
     void LthTexture::createTextureImage(stbi_uc* pixels) {

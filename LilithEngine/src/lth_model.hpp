@@ -4,6 +4,7 @@
 #include "lth_device.hpp"
 #include "lth_buffer.hpp"
 #include "lth_acceleration_structure.hpp"
+#include "lth_scene_element.hpp"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -12,7 +13,8 @@
 #include <memory>
 
 namespace lth {
-	class LthModel {
+
+	class LthModel : public LthSceneElement {
 	public:
 		struct Vertex {
 			glm::vec3 position{};
@@ -39,13 +41,15 @@ namespace lth {
 			bool loadModel(const std::string& filepath);
 		};
 
-		LthModel(LthDevice& device, const LthModel::Builder& builder);
+		LthModel(id_t modId, LthDevice& device, const LthModel::Builder& builder);
 		~LthModel();
+		
+		static std::shared_ptr<LthModel> createModelFromFile(id_t modId, LthDevice& device, const std::string& filePath);
 
 		LthModel(const LthModel&) = delete;
 		LthModel& operator=(const LthModel&) = delete;
-
-		static std::unique_ptr<LthModel> createModelFromFile(LthDevice &device, const std::string& filePath);
+		LthModel(LthModel&&) = default;
+		LthModel& operator=(LthModel&&) = default;
 
 		void bind(VkCommandBuffer commandBuffer);
 		void draw(VkCommandBuffer commandBuffer);
@@ -55,6 +59,7 @@ namespace lth {
 		void createIndexBuffer(const std::vector<uint32_t>& indices);
 		void createASGeometry(const Builder& builder);
 		void createBLAS();
+
 
 		LthDevice& lthDevice;
 		

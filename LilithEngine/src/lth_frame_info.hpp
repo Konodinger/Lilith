@@ -2,7 +2,7 @@
 #define __LTH_FRAME_INFO_HPP__
 
 #include "lth_camera.hpp"
-#include "gameObjects/lth_game_object.hpp"
+#include "lth_scene.hpp"
 
 
 #define MAX_LIGHTS 8
@@ -31,7 +31,7 @@ namespace lth {
 		VkCommandBuffer computeCommandBuffer;
 		LthCamera& camera;
 		VkDescriptorSet globalDescriptorSet;
-		LthGameObject::Map& gameObjects;
+		LthScene& scene;
 	};
 }
 

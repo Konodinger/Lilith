@@ -1,7 +1,7 @@
 #ifndef __KEYBOARD_MOVEMENT_CONTROLL_HPP__
 #define __KEYBOARD_MOVEMENT_CONTROLL_HPP__
 
-#include "gameObjects/lth_game_object.hpp"
+#include "components/transform.hpp"
 #include "lth_window.hpp"
 
 namespace lth {
@@ -23,7 +23,7 @@ namespace lth {
 			int lookDown = GLFW_KEY_DOWN;
 		};
 
-		void moveInPlaneXZ(GLFWwindow* window, float dt, LthGameObject& gameObject);
+		void moveInPlaneXZ(GLFWwindow* window, float dt, Transform& gameObject);
 
 		KeyMappings keys{};
 		float moveSpeed = 3.f;

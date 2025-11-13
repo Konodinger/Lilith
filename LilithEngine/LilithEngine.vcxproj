@@ -190,6 +190,8 @@
     <ClCompile Include="src\lth_buffer.cpp" />
     <ClCompile Include="src\lth_camera.cpp" />
     <ClCompile Include="src\lth_compile_options.cpp" />
+    <ClCompile Include="src\lth_scene.cpp" />
+    <ClCompile Include="src\lth_scene.hpp" />
     <ClCompile Include="src\pipelines\lth_compute_pipeline.cpp" />
     <ClCompile Include="src\lth_descriptors.cpp" />
     <ClCompile Include="src\lth_device.cpp" />
@@ -237,6 +239,7 @@
     <ClInclude Include="src\lth_swap_chain.hpp" />
     <ClInclude Include="src\lth_window.hpp" />
     <ClInclude Include="src\pipelines\lth_ray_tracing_pipeline.hpp" />
+    <ClInclude Include="src\lth_scene_element.hpp" />
     <ClInclude Include="src\systems\lth_particle_system.hpp" />
     <ClInclude Include="src\systems\lth_ray_tracing_system.hpp" />
     <ClInclude Include="src\systems\lth_system.hpp" />

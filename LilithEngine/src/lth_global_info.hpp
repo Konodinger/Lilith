@@ -3,10 +3,11 @@
 
 #include <stdint.h>
 
-#define SHADERSFOLDERPATH(fileName) "shaders/" fileName
-#define MODELSFOLDERPATH(fileName) "models/" fileName
-#define TEXTURESFOLDERPATH(fileName) "textures/" fileName
+#define SHADERSFOLDERPATH(fileName) "shaders/" + std::string(fileName)
+#define MODELSFOLDERPATH(fileName) "models/" + std::string(fileName)
+#define TEXTURESFOLDERPATH(fileName) "textures/" + std::string(fileName)
 #define IMGUIFONTSFOLDERPATH(fileName) "src/libraries/imgui/misc/fonts/" fileName
+#define DEFAULTTEXTURE "white_pixel.png"
 
 namespace lth {
 	static constexpr int WIDTH = 1200;

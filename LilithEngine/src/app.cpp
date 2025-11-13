@@ -22,7 +22,7 @@ namespace lth {
 
     App::App() :
         cameraController{},
-        viewerObject { LthGameObject::createGameObject() },
+        viewerTransform{},
         startingTime{ std::chrono::high_resolution_clock::now() } {
 
         assert(GLOBALPOOLMAXSETS >= MAX_FRAMES_IN_FLIGHT && "Error: globalPool default size is too small for the swap chain.");
@@ -34,9 +34,7 @@ namespace lth {
             .setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
             .build();
         
-        loadTextures();
-		loadGameObjects();
-
+        loadScene();
         initImGui();
 	}
 
@@ -58,7 +56,7 @@ namespace lth {
         };
 
         LthCamera camera{};
-        viewerObject.transform.setTranslation({ 0.f, -0.5f, -1.f });
+        viewerTransform.setTranslation({ 0.f, -0.5f, -1.f });
 
         currentTime = std::chrono::high_resolution_clock::now();
 
@@ -89,7 +87,7 @@ namespace lth {
                 }
             }
 
-            camera.setViewQuat(viewerObject.transform.getTranslation(), viewerObject.transform.getRotationMatrix());
+            camera.setViewQuat(viewerTransform.getTranslation(), viewerTransform.getRotationMatrix());
             float aspect = lthRenderer.getAspectRatio(); // Might change when the window is resized.
             camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 1000.f);
 
@@ -108,7 +106,7 @@ namespace lth {
                     computeCommandBuffer,
                     camera,
                     globalDescriptorSets[frameIndex],
-                    gameObjects
+                    scene
                 };
 
                 // Update uniform buffers.
@@ -120,9 +118,9 @@ namespace lth {
                 uboBuffers[frameIndex]->writeToBuffer(&ubo);
                 uboBuffers[frameIndex]->flush();
 
-                for (auto& keyValue : gameObjects) {
+                for (auto& keyValue : scene.gameObjects()) {
                     auto& obj = keyValue.second;
-                    obj.updateUBO(frameIndex);
+                    obj->updateUBO(frameIndex);
                 }
 
                 // Dispatch the compute work.
@@ -161,51 +159,48 @@ namespace lth {
     // Update the component of the scene according to the different inputs.
     void App::update(float dt) {
 
-        cameraController.moveInPlaneXZ(lthWindow.getGLFWwindow(), dt, viewerObject);
+        cameraController.moveInPlaneXZ(lthWindow.getGLFWwindow(), dt, viewerTransform);
     }
 
-	void App::loadGameObjects() {
-		
-        std::shared_ptr<LthModel> lthModel = LthModel::createModelFromFile(lthDevice, MODELSFOLDERPATH("smooth_vase.obj"));
+	void App::loadScene() {
+        
+        auto viking_room_tex = scene.createTextureFromFile("viking_room.png", true);
+        auto circuitry_tex = scene.createTextureFromFile("Circuitry_albedo.bmp", true);
 
-        auto smooth_vase = LthGameObject::createGameObject();
-        smooth_vase.model = lthModel;
-        smooth_vase.transform.setTranslation({ 0.5f, -0.5f, 0.f });
-        smooth_vase.transform.setScale({ 2.f, 2.f, 2.f });
+        std::shared_ptr<LthModel> lthModel = scene.createModelFromFile(MODELSFOLDERPATH("smooth_vase.obj"));
 
-        gameObjects.emplace(smooth_vase.getId(), std::move(smooth_vase));
+        auto smooth_vase = scene.createGameObject();
+        smooth_vase->model = lthModel;
+        smooth_vase->transform.setTranslation({ 0.5f, -0.5f, 0.f });
+        smooth_vase->transform.setScale({ 2.f, 2.f, 2.f });
 
-        lthModel = LthModel::createModelFromFile(lthDevice, MODELSFOLDERPATH("flat_vase.obj"));
+        lthModel = scene.createModelFromFile(MODELSFOLDERPATH("flat_vase.obj"));
 
-        auto flat_vase = LthGameObject::createGameObject();
-        flat_vase.model = lthModel;
-        flat_vase.transform.setTranslation({ -0.5f, -0.5f, 0.f });
-        flat_vase.transform.setScale({ 2.f, 2.f, 2.f });
+        auto flat_vase = scene.createGameObject();
+        flat_vase->model = lthModel;
+        flat_vase->setUsesColorTexture(false);
+        flat_vase->setTexture(false);
+        flat_vase->transform.setTranslation({ -0.5f, -0.5f, 0.f });
+        flat_vase->transform.setScale({ 2.f, 2.f, 2.f });
 
-        gameObjects.emplace(flat_vase.getId(), std::move(flat_vase));
+        lthModel = scene.createModelFromFile(MODELSFOLDERPATH("quad.obj"));
 
-        lthModel = LthModel::createModelFromFile(lthDevice, MODELSFOLDERPATH("quad.obj"));
+        auto floor = scene.createGameObject();
+        floor->model = lthModel;
+        floor->setUsesColorTexture(true);
+        floor->setTexture(circuitry_tex);
+        floor->transform.setTranslation({ 0.f, 0.f, 0.f });
+        floor->transform.setScale({ 3.f, 3.f, 3.f});
 
-        auto floor = LthGameObject::createGameObject();
-        floor.model = lthModel;
-        floor.setUsesColorTexture(true);
-        floor.setTextureId(1);
-        floor.transform.setTranslation({ 0.f, 0.f, 0.f });
-        floor.transform.setScale({ 3.f, 3.f, 3.f});
-
-        gameObjects.emplace(floor.getId(), std::move(floor));
-
-        lthModel = LthModel::createModelFromFile(lthDevice, MODELSFOLDERPATH("viking_room.obj"));
+        lthModel = scene.createModelFromFile(MODELSFOLDERPATH("viking_room.obj"));
         //std::shared_ptr<LthTexture> lthTexture = LthTexture::createTextureFromFile(lthDevice, TEXTURESFOLDERPATH("viking_room.png"), true);
 
-        auto viking_room = LthGameObject::createGameObject();
-        viking_room.model = lthModel;
+        auto viking_room = scene.createGameObject();
+        viking_room->model = lthModel;
         // viking_room.texture = texture;
-        viking_room.setUsesColorTexture(true);
-        viking_room.setTextureId(0);
-        viking_room.transform.setTranslation({ 0.f, 0.f, 5.f });
-
-        gameObjects.emplace(viking_room.getId(), std::move(viking_room));
+        viking_room->setUsesColorTexture(true);
+        viking_room->setTexture(viking_room_tex);
+        viking_room->transform.setTranslation({ 0.f, 0.f, 5.f });
 
         //Point lights
         std::vector<glm::vec3> lightColors{
@@ -219,39 +214,15 @@ namespace lth {
 
 
         for (int i = 0; i < lightColors.size(); i++) {
-            auto pointLight = LthGameObject::createPointLight(1.f);
-            pointLight.color = lightColors[i];
+            auto pointLight = scene.createPointLight(1.f);
+            pointLight->color = lightColors[i];
             auto rotateLight = glm::rotate(
                 glm::mat4(1.f),
                 (i * TWO_PI) / lightColors.size(),
                 { 0.f, -1.f, 0.f });
-            pointLight.transform.setTranslation(glm::vec3(rotateLight * glm::vec4(-1.f, -1.f, -1.f, 1.f)));
-            gameObjects.emplace(pointLight.getId(), std::move(pointLight));
+            pointLight->transform.setTranslation(glm::vec3(rotateLight * glm::vec4(-1.f, -1.f, -1.f, 1.f)));
         }
 	}
-
-    uint32_t App::loadTexture(const std::string& textureName) {
-        if (textureArrayCount >= textureArray.size()) {
-            // In the future, may try to resize the texture array and the global descriptor set.
-            std::cerr << "Error: texture array max size is already reached. Can't load any more texture." << std::endl;
-
-            /*textureArray.resize(textureArray.size() + TEXTUREARRAYSIZE);
-            std::cout << "The texture array is too short. Resizing to " << textureArray.size() << "..." << std::endl;
-            assert(textureArray.size() < GLOBALPOOLMAXSETS && "Error: the texture array is too big and may not be handled correctly by the descriptor pool.");*/
-        }
-        textureArray[textureArrayCount++] = LthTexture::createTextureFromFile(lthDevice, "textures/" + textureName, true);
-        return textureArrayCount;
-
-    }
-
-    void App::loadTextures() {
-        defaultTexture = LthTexture::createTextureFromFile(lthDevice, TEXTURESFOLDERPATH("white_pixel.png"), false);
-        assert(TEXTUREARRAYSIZE < GLOBALPOOLMAXSETS && "Error: the texture array is too big and may not be handled correctly by the descriptor pool.");
-        textureArray.resize(TEXTUREARRAYSIZE);
-
-        loadTexture("viking_room.png");
-        loadTexture("Circuitry Albedo.bmp");
-    }
 
     void App::createDescriptorSets() {
         setLayouts.globalSetLayout = LthDescriptorSetLayout::Builder(lthDevice)
@@ -283,13 +254,7 @@ namespace lth {
             uboBuffers[i]->map();
         }
 
-        std::vector<VkDescriptorImageInfo> descriptorImagesInfo{};
-        for (int i = 0; i < TEXTUREARRAYSIZE; ++i) {
-            descriptorImagesInfo.push_back(
-                (textureArray[i] == nullptr) ?
-                defaultTexture->imageInfo() :
-                    textureArray[i]->imageInfo());
-        }
+        auto descriptorImagesInfo = scene.getDescriptorImagesInfos();
 
         globalDescriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
         for (int i = 0; i < globalDescriptorSets.size(); ++i) {
@@ -321,9 +286,9 @@ namespace lth {
 
         // Game objects descriptor sets.
 
-        for (auto& keyValue : gameObjects) {
+        for (auto& keyValue : scene.gameObjects()) {
             auto& obj = keyValue.second;
-            obj.createDescriptorSet(lthDevice, setLayouts.gameObjectSetLayout.get(), generalDescriptorPool.get());
+            obj->createDescriptorSet(lthDevice, setLayouts.gameObjectSetLayout.get(), generalDescriptorPool.get());
         }
     }
 

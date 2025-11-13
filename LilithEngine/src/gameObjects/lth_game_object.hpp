@@ -5,6 +5,7 @@
 #include "../lth_texture.hpp"
 #include "../components/transform.hpp"
 #include "../lth_descriptors.hpp"
+#include "../lth_scene_element.hpp"
 
 #include <memory>
 #include <unordered_map>
@@ -12,8 +13,8 @@
 namespace lth {
 
 	struct GameObjectUBO {
-		alignas(4) bool usesColorTexture = false;
-		int textureId = 0;
+		uint32_t usesColorTexture = 0;
+		uint32_t textureId = 0;
 	};
 	
 	struct PointLightComponent {
@@ -21,31 +22,26 @@ namespace lth {
 		float lightQuadraticAttenuation = 1.f;
 	};
 
-	class LthGameObject {
+	class LthGameObject : public LthSceneElement {
 	public:
-		using id_t = unsigned int;
-		using Map = std::unordered_map<id_t, LthGameObject>;
+		//using Map = std::unordered_map<id_t, LthGameObject>;
 
-		static LthGameObject createGameObject() {
-			static id_t currentId = 0;
-			return LthGameObject{ currentId++ };
-		}
+		LthGameObject(id_t objId) : LthSceneElement(objId) {}
 
-		static LthGameObject createPointLight(
-			float intensity = 1.f,
-			float radius = 0.05f,
-			glm::vec3 color = glm::vec3(1.f));
-
+		static std::shared_ptr<LthGameObject> createPointLight(
+			id_t objId,
+			float intensity,
+			float radius,
+			glm::vec3 color);
 
 		LthGameObject(const LthGameObject&) = delete;
 		LthGameObject &operator=(const LthGameObject&) = delete;
 		LthGameObject(LthGameObject&&) = default;
 		LthGameObject &operator=(LthGameObject&&) = default;
 		
-		id_t getId() const { return id; }
-
-		void setUsesColorTexture(bool usesColorTexture);
-		void setTextureId(int textureId) { ubo.textureId = textureId; }
+		void setUsesColorTexture(bool usesColorTexture) { ubo.usesColorTexture = static_cast<uint32_t>(usesColorTexture); }
+		void setTexture(const std::shared_ptr<LthTexture> texture) { ubo.textureId = texture->getDescriptorId(); }
+		void setTexture(uint32_t textureId) { ubo.textureId = textureId; }
 		void createDescriptorSet(LthDevice &lthDevice,
 			LthDescriptorSetLayout* gameObjectSetLayout,
 			LthDescriptorPool* generalDescriptorPool);
@@ -61,9 +57,7 @@ namespace lth {
 		std::unique_ptr<PointLightComponent> pointLight = nullptr;
 
 	private:
-		LthGameObject(id_t objId) : id{objId} {}
 
-		id_t id;
 		GameObjectUBO ubo{};
 	};
 }

@@ -52,15 +52,15 @@ namespace lth {
 
 	void LthPointLightSystem::update(FrameInfo& frameInfo, GlobalUBO& ubo) {
 		int lightIndex = 0;
-		for (auto& kv : frameInfo.gameObjects) {
+		for (auto& kv : frameInfo.scene.gameObjects()) {
 			auto& obj = kv.second;
-			if (obj.pointLight == nullptr) continue;
+			if (obj->pointLight == nullptr) continue;
 
 			assert(lightIndex < MAX_LIGHTS && "Point lights exceed maximum specified!");
 
-			ubo.pointLights[lightIndex].position = obj.transform.getTranslation();
-			ubo.pointLights[lightIndex].lightQuadraticAttenuation = obj.pointLight->lightQuadraticAttenuation;
-			ubo.pointLights[lightIndex].color = glm::vec4(obj.color, obj.pointLight->lightIntensity);
+			ubo.pointLights[lightIndex].position = obj->transform.getTranslation();
+			ubo.pointLights[lightIndex].lightQuadraticAttenuation = obj->pointLight->lightQuadraticAttenuation;
+			ubo.pointLights[lightIndex].color = glm::vec4(obj->color, obj->pointLight->lightIntensity);
 			lightIndex += 1;
 
 		}
@@ -70,13 +70,13 @@ namespace lth {
 	void LthPointLightSystem::render(FrameInfo& frameInfo) {
 
 		//Note: looping through every gameobject is inefficient and need to be readjusted.
-		std::map<float, LthGameObject::id_t> sorted;
-		for (auto& kv : frameInfo.gameObjects) {
+		std::map<float, lth::id_t> sorted;
+		for (auto& kv : frameInfo.scene.gameObjects()) {
 			auto& obj = kv.second;
-			if (obj.pointLight == nullptr) continue;
-			auto offset = frameInfo.camera.getPosition() - obj.transform.getTranslation();
+			if (obj->pointLight == nullptr) continue;
+			auto offset = frameInfo.camera.getPosition() - obj->transform.getTranslation();
 			float distSquared = glm::dot(offset, offset);
-			sorted[distSquared] = obj.getId();
+			sorted[distSquared] = obj->getId();
 		}
 
 		lthGraphicsPipeline->bind(frameInfo.graphicsCommandBuffer);
@@ -93,12 +93,12 @@ namespace lth {
 
 		//Iterate form farthest to nearest light.
 		for (auto it = sorted.rbegin(); it != sorted.rend(); ++it) {
-			auto& obj = frameInfo.gameObjects.at(it->second);
+			auto& obj = frameInfo.scene.gameObjects().at(it->second);
 
 			PointLightPushConstants push{};
-			push.position = glm::vec4(obj.transform.getTranslation(), 1.f);
-			push.color = glm::vec4(obj.color, obj.pointLight->lightIntensity);
-			push.radius = obj.transform.getScale().x;
+			push.position = glm::vec4(obj->transform.getTranslation(), 1.f);
+			push.color = glm::vec4(obj->color, obj->pointLight->lightIntensity);
+			push.radius = obj->transform.getScale().x;
 
 			vkCmdPushConstants(
 				frameInfo.graphicsCommandBuffer,
@@ -115,7 +115,7 @@ namespace lth {
 				graphicsPipelineLayout,
 				1,
 				1,
-				&obj.gameObjectDescriptorSets[frameInfo.frameIndex],
+				&obj->gameObjectDescriptorSets[frameInfo.frameIndex],
 				0,
 				nullptr);
 

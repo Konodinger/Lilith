@@ -5,17 +5,17 @@
 
 namespace lth {
 
-	LthGameObject LthGameObject::createPointLight(float intensity, float radius, glm::vec3 color) {
-		LthGameObject gameObj = LthGameObject::createGameObject();
-		gameObj.color = color;
-		gameObj.transform.setScaleX(radius);
-		gameObj.pointLight = std::make_unique<PointLightComponent>();
-		gameObj.pointLight->lightIntensity = intensity;
+    std::shared_ptr<LthGameObject> LthGameObject::createPointLight(
+        id_t objId,
+        float intensity,
+        float radius,
+        glm::vec3 color) {
+		auto gameObj = std::make_shared<LthGameObject>(objId++);
+		gameObj->color = color;
+		gameObj->transform.setScaleX(radius);
+		gameObj->pointLight = std::make_unique<PointLightComponent>();
+		gameObj->pointLight->lightIntensity = intensity;
 		return gameObj;
-	}
-
-	void LthGameObject::setUsesColorTexture(bool usesColorTexture) {
-		ubo.usesColorTexture = usesColorTexture;
 	}
 
 	void LthGameObject::createDescriptorSet(LthDevice &lthDevice,
