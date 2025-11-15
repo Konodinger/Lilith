@@ -235,70 +235,15 @@ namespace lth {
 	}
 
 	void LthModel::createBLAS() {
-		VkAccelerationStructureBuildGeometryInfoKHR accelerationStructureBuildGeometryInfo{};
-		accelerationStructureBuildGeometryInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
-		accelerationStructureBuildGeometryInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-		accelerationStructureBuildGeometryInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
-		accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
-		accelerationStructureBuildGeometryInfo.geometryCount = 1;
-		accelerationStructureBuildGeometryInfo.pGeometries = &asGeometry;
+		VkAccelerationStructureBuildGeometryInfoKHR asBuildGeometryInfo{};
+		asBuildGeometryInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
+		asBuildGeometryInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
+		asBuildGeometryInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
+		asBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+		asBuildGeometryInfo.geometryCount = 1;
+		asBuildGeometryInfo.pGeometries = &asGeometry;
 
-		VkAccelerationStructureBuildSizesInfoKHR accelerationStructureBuildSizesInfo{};
-		accelerationStructureBuildSizesInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
-
-		vkGetAccelerationStructureBuildSizesKHR(
-			lthDevice.getDevice(),
-			VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
-			&accelerationStructureBuildGeometryInfo,
-			&asBuildRangeInfo.primitiveCount,
-			&accelerationStructureBuildSizesInfo);
-
-		uint32_t scratchOffsetAlignment = lthDevice.accelStructProperties.minAccelerationStructureScratchOffsetAlignment;
-		VkDeviceSize scratchSize = ((accelerationStructureBuildSizesInfo.buildScratchSize + scratchOffsetAlignment - 1) & ~(scratchOffsetAlignment - 1));
-
-		LthBuffer scratchBuffer{
-			lthDevice,
-			scratchSize,
-			1,
-			VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-			scratchOffsetAlignment
-		};
-
-		VkBufferDeviceAddressInfo scratchBufferDeviceAddressInfo{
-			.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
-			.pNext = nullptr,
-			.buffer = scratchBuffer.getBuffer(),
-		};
-
-		auto scratchBufferDeviceAddress = vkGetBufferDeviceAddress(lthDevice.getDevice(), &scratchBufferDeviceAddressInfo);
-
-		accStruct.buffer = std::make_unique<LthBuffer>(
-			lthDevice,
-			accelerationStructureBuildSizesInfo.accelerationStructureSize,
-			1,
-			VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-		VkAccelerationStructureCreateInfoKHR accelerationStructureCreateInfo{};
-		accelerationStructureCreateInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
-		accelerationStructureCreateInfo.buffer = accStruct.buffer->getBuffer();
-		accelerationStructureCreateInfo.size = accelerationStructureBuildSizesInfo.accelerationStructureSize;
-		accelerationStructureCreateInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-
-		vkCreateAccelerationStructureKHR(lthDevice.getDevice(), &accelerationStructureCreateInfo, nullptr, &accStruct.handle);
-
-		accelerationStructureBuildGeometryInfo.dstAccelerationStructure = accStruct.handle;
-		accelerationStructureBuildGeometryInfo.scratchData.deviceAddress = scratchBufferDeviceAddress;
-
-		lthDevice.buildAccelerationStructure(accelerationStructureBuildGeometryInfo, asBuildRangeInfo);
-
-		VkAccelerationStructureDeviceAddressInfoKHR accelerationDeviceAddressInfo{};
-		accelerationDeviceAddressInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
-		accelerationDeviceAddressInfo.accelerationStructure = accStruct.handle;
-
-		accStruct.deviceAddress =
-			vkGetAccelerationStructureDeviceAddressKHR(lthDevice.getDevice(), &accelerationDeviceAddressInfo);
+		buildAccelerationStructure(lthDevice, VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR, asGeometry, asBuildRangeInfo, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR, accStruct);
 	}
 
 	void LthModel::draw(VkCommandBuffer commandBuffer) {

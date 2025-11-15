@@ -51,6 +51,8 @@ namespace lth {
 		LthModel(LthModel&&) = default;
 		LthModel& operator=(LthModel&&) = default;
 
+		VkDeviceAddress getBLASAddress() const { return accStruct.deviceAddress; }
+
 		void bind(VkCommandBuffer commandBuffer);
 		void draw(VkCommandBuffer commandBuffer);
 	private:

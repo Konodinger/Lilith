@@ -170,37 +170,36 @@ namespace lth {
         std::shared_ptr<LthModel> lthModel = scene.createModelFromFile(MODELSFOLDERPATH("smooth_vase.obj"));
 
         auto smooth_vase = scene.createGameObject();
-        smooth_vase->model = lthModel;
         smooth_vase->transform.setTranslation({ 0.5f, -0.5f, 0.f });
         smooth_vase->transform.setScale({ 2.f, 2.f, 2.f });
+        scene.linkGameObjectToModel(smooth_vase, lthModel);
 
         lthModel = scene.createModelFromFile(MODELSFOLDERPATH("flat_vase.obj"));
 
         auto flat_vase = scene.createGameObject();
-        flat_vase->model = lthModel;
-        flat_vase->setUsesColorTexture(false);
-        flat_vase->setTexture(false);
         flat_vase->transform.setTranslation({ -0.5f, -0.5f, 0.f });
         flat_vase->transform.setScale({ 2.f, 2.f, 2.f });
+        scene.linkGameObjectToModel(flat_vase, lthModel);
+        flat_vase->setUsesColorTexture(false);
+        flat_vase->setTexture(0);
 
         lthModel = scene.createModelFromFile(MODELSFOLDERPATH("quad.obj"));
 
         auto floor = scene.createGameObject();
-        floor->model = lthModel;
-        floor->setUsesColorTexture(true);
-        floor->setTexture(circuitry_tex);
         floor->transform.setTranslation({ 0.f, 0.f, 0.f });
         floor->transform.setScale({ 3.f, 3.f, 3.f});
+        scene.linkGameObjectToModel(floor, lthModel);
+        floor->setUsesColorTexture(true);
+        floor->setTexture(circuitry_tex);
 
         lthModel = scene.createModelFromFile(MODELSFOLDERPATH("viking_room.obj"));
         //std::shared_ptr<LthTexture> lthTexture = LthTexture::createTextureFromFile(lthDevice, TEXTURESFOLDERPATH("viking_room.png"), true);
 
         auto viking_room = scene.createGameObject();
-        viking_room->model = lthModel;
-        // viking_room.texture = texture;
+        viking_room->transform.setTranslation({ 0.f, 0.f, 5.f });
+        scene.linkGameObjectToModel(viking_room, lthModel);
         viking_room->setUsesColorTexture(true);
         viking_room->setTexture(viking_room_tex);
-        viking_room->transform.setTranslation({ 0.f, 0.f, 5.f });
 
         //Point lights
         std::vector<glm::vec3> lightColors{
@@ -222,6 +221,8 @@ namespace lth {
                 { 0.f, -1.f, 0.f });
             pointLight->transform.setTranslation(glm::vec3(rotateLight * glm::vec4(-1.f, -1.f, -1.f, 1.f)));
         }
+
+        scene.createTLAS();
 	}
 
     void App::createDescriptorSets() {

@@ -89,7 +89,6 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;$(ProjectDir)src\libraries\glfw-3.3.8.bin.WIN64\lib-vc2022</AdditionalLibraryDirectories>
-      <AdditionalOptions>/NODEFAULTLIB:MSVCRT %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PreBuildEvent>
       <Command>$(ProjectDir)shadersCompile.bat</Command>
@@ -112,7 +111,6 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;$(ProjectDir)src\libraries\glfw-3.3.8.bin.WIN64\lib-vc2022</AdditionalLibraryDirectories>
-      <AdditionalOptions>/NODEFAULTLIB:MSVCRT %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PreBuildEvent>
       <Command>$(ProjectDir)shadersCompile.bat</Command>
@@ -133,7 +131,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;$(ProjectDir)src\libraries\glfw-3.3.8.bin.WIN64\lib-vc2022</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalOptions>/NODEFAULTLIB:MSVCRT %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PreBuildEvent>
       <Command>$(ProjectDir)shadersCompile.bat</Command>
@@ -163,7 +160,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;$(ProjectDir)src\libraries\glfw-3.3.8.bin.WIN64\lib-vc2022</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalOptions>/NODEFAULTLIB:MSVCRT %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PreBuildEvent>
       <Command>$(ProjectDir)shadersCompile.bat</Command>
@@ -187,6 +183,7 @@
     <ClCompile Include="src\libraries\imgui\imgui_tables.cpp" />
     <ClCompile Include="src\libraries\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\libraries\imgui\misc\cpp\imgui_stdlib.cpp" />
+    <ClCompile Include="src\lth_acceleration_structure.cpp" />
     <ClCompile Include="src\lth_buffer.cpp" />
     <ClCompile Include="src\lth_camera.cpp" />
     <ClCompile Include="src\lth_compile_options.cpp" />
@@ -220,6 +217,7 @@
     <ClInclude Include="src\libraries\imgui\imstb_textedit.h" />
     <ClInclude Include="src\libraries\imgui\imstb_truetype.h" />
     <ClInclude Include="src\libraries\imgui\misc\cpp\imgui_stdlib.h" />
+    <ClInclude Include="src\lth_acceleration_structure.hpp" />
     <ClInclude Include="src\lth_compile_options.hpp" />
     <ClInclude Include="src\pipelines\lth_compute_pipeline.hpp" />
     <ClInclude Include="src\lth_global_info.hpp" />

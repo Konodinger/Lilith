@@ -138,21 +138,21 @@ namespace lth {
       createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
       createInfo.ppEnabledExtensionNames = extensions.data();
 
-      VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
+      VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = {};
+      VkValidationFeaturesEXT features = {};
       if (LTH_ENABLE_VALIDATION_LAYERS) {
+        features.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
+        features.enabledValidationFeatureCount = static_cast<uint32_t>(LTH_VALIDATION_FEATURE_ENABLES_LIST.size());
+        features.pEnabledValidationFeatures = LTH_VALIDATION_FEATURE_ENABLES_LIST.data();
+
         createInfo.enabledLayerCount = static_cast<uint32_t>(LTH_VALIDATION_LAYERS_LIST.size());
         createInfo.ppEnabledLayerNames = LTH_VALIDATION_LAYERS_LIST.data();
 
         populateDebugMessengerCreateInfo(debugCreateInfo);
 
-        VkValidationFeaturesEXT features = {};
-        features.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
-        features.enabledValidationFeatureCount = static_cast<uint32_t>(LTH_VALIDATION_FEATURE_ENABLES_LIST.size());
-        features.pEnabledValidationFeatures = LTH_VALIDATION_FEATURE_ENABLES_LIST.data();
         debugCreateInfo.pNext = &features;
 
-        createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT *)&debugCreateInfo;
-        createInfo.pNext = &features;
+        createInfo.pNext = &debugCreateInfo;
       } else {
         createInfo.enabledLayerCount = 0;
         createInfo.pNext = nullptr;

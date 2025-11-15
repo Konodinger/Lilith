@@ -24,8 +24,6 @@ namespace lth {
 
 	class LthGameObject : public LthSceneElement {
 	public:
-		//using Map = std::unordered_map<id_t, LthGameObject>;
-
 		LthGameObject(id_t objId) : LthSceneElement(objId) {}
 
 		static std::shared_ptr<LthGameObject> createPointLight(
@@ -42,6 +40,8 @@ namespace lth {
 		void setUsesColorTexture(bool usesColorTexture) { ubo.usesColorTexture = static_cast<uint32_t>(usesColorTexture); }
 		void setTexture(const std::shared_ptr<LthTexture> texture) { ubo.textureId = texture->getDescriptorId(); }
 		void setTexture(uint32_t textureId) { ubo.textureId = textureId; }
+		uint32_t getModelId() const { return modelId; }
+
 		void createDescriptorSet(LthDevice &lthDevice,
 			LthDescriptorSetLayout* gameObjectSetLayout,
 			LthDescriptorPool* generalDescriptorPool);
@@ -50,15 +50,18 @@ namespace lth {
 		glm::vec3 color{};
 		Transform transform{};
 
-		//Optional, will depend on the nature of the game object.
-		std::shared_ptr<LthModel> model{};
 		std::vector<VkDescriptorSet> gameObjectDescriptorSets{};
 		std::vector<std::unique_ptr<LthBuffer>> gameObjectUboBuffers{};
 		std::unique_ptr<PointLightComponent> pointLight = nullptr;
 
 	private:
 
+		//Id set to 0 if no model
+		uint32_t modelId = 0;
 		GameObjectUBO ubo{};
+		void setModel(uint32_t modId) { modelId = modId; }
+
+		friend class LthScene;
 	};
 }
 

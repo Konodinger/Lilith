@@ -56,9 +56,9 @@ namespace lth {
 			0,
 			nullptr);
 
-		for (auto& keyValue : frameInfo.scene.gameObjects()) {
-			auto& obj = keyValue.second;
-			if (obj->model == nullptr) continue;
+		for (auto& keyValue : frameInfo.scene.getInstanceArray()) {
+			auto& obj = frameInfo.scene.gameObject(keyValue.first);
+			auto& model = frameInfo.scene.model(keyValue.second);
 
 			SimplePushConstantData push{};
 			push.modelMatrix = obj->transform.modelMatrix();
@@ -82,8 +82,8 @@ namespace lth {
 				0,
 				nullptr);
 
-			obj->model->bind(frameInfo.graphicsCommandBuffer);
-			obj->model->draw(frameInfo.graphicsCommandBuffer);
+			model->bind(frameInfo.graphicsCommandBuffer);
+			model->draw(frameInfo.graphicsCommandBuffer);
 		}
 	}
 }

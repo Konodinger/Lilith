@@ -8,12 +8,18 @@
 namespace lth {
 
 
-    struct AccelerationStructure
-    {
+    struct AccelerationStructure {
         VkAccelerationStructureKHR handle;
         VkDeviceAddress            deviceAddress;
         std::unique_ptr<LthBuffer> buffer;
     };
+
+	void buildAccelerationStructure(LthDevice& device,
+		VkAccelerationStructureTypeKHR asType,
+		VkAccelerationStructureGeometryKHR& asGeometry,
+		VkAccelerationStructureBuildRangeInfoKHR& asBuildRangeInfo,
+		VkBuildAccelerationStructureFlagsKHR asFlags,
+		AccelerationStructure& accStruct);
 }
 
 #endif
