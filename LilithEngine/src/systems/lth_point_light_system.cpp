@@ -68,6 +68,7 @@ namespace lth {
 	}
 
 	void LthPointLightSystem::render(FrameInfo& frameInfo) {
+		if (!activateRender) return;
 
 		//Note: looping through every gameobject is inefficient and need to be readjusted.
 		std::map<float, lth::id_t> sorted;

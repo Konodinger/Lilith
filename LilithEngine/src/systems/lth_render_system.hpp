@@ -10,9 +10,9 @@
 
 namespace lth {
 
-	class LthRenderSystem : LthGraphicsSystem {
-		inline static std::string vertexShaderSpvPath = SHADERSFOLDERPATH("standard.vert.spv");
-		inline static std::string fragmentShaderSpvPath = SHADERSFOLDERPATH("standard.frag.spv");
+	class LthRenderSystem : public LthGraphicsSystem {
+		inline static std::string vertexShaderSpvPath = SHADERSFOLDERPATH("standard.vert");
+		inline static std::string fragmentShaderSpvPath = SHADERSFOLDERPATH("standard.frag");
 
 	public:
 

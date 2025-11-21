@@ -18,9 +18,11 @@ namespace lth {
 
 		virtual void createPipeline(VkRenderPass renderPass) = 0;
 		virtual void render(FrameInfo& frameInfo) = 0;
+		bool activateRender = true;
 	protected:
 		std::unique_ptr<LthGraphicsPipeline> lthGraphicsPipeline;
 		VkPipelineLayout graphicsPipelineLayout = 0;
+
 	};
 }
 

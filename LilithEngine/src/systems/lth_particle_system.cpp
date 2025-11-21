@@ -58,7 +58,6 @@ namespace lth {
 	void LthParticleSystem::createComputePipeline(VkRenderPass renderPass) {
 		assert(computePipelineLayout != nullptr && "Cannot create pipeline before pipeline layout!");
 
-		LthComputePipelineConfigInfo pipelineConfig{};
 		lthComputePipeline = std::make_unique<LthComputePipeline>(
 			lthDevice,
 			computePipelineLayout,
@@ -116,6 +115,7 @@ namespace lth {
 
 	void LthParticleSystem::dispatch(FrameInfo& frameInfo, VkDescriptorSet computeDescriptorSet) {
 
+		if (!activateCompute) return;
 		VkCommandBuffer commandBuffer = frameInfo.computeCommandBuffer;
 		lthComputePipeline->bind(commandBuffer);
 
@@ -126,6 +126,7 @@ namespace lth {
 	}
 
 	void LthParticleSystem::render(FrameInfo& frameInfo) {
+		if (!activateRender) return;
 
 		VkCommandBuffer commandBuffer = frameInfo.graphicsCommandBuffer;
 

@@ -1,6 +1,5 @@
 #include "app.hpp"
 
-#include "systems/lth_system_set.hpp"
 #include "lth_camera.hpp"
 #include "lth_buffer.hpp"
 #include "lth_utils.hpp"
@@ -48,12 +47,12 @@ namespace lth {
 
         createDescriptorSets();
 
-        LthSystemSet systemSet{
+        systemSet = std::make_unique<LthSystemSet>(
             lthDevice,
             lthRenderer.getSwapChainRenderPass(),
             setLayouts,
             cboBuffers
-        };
+        );
 
         LthCamera camera{};
         viewerTransform.setTranslation({ 0.f, -0.5f, -1.f });
@@ -114,7 +113,7 @@ namespace lth {
                 ubo.projectionMatrix = camera.getProjection();
                 ubo.viewMatrix = camera.getView();
                 ubo.inverseViewMatrix = camera.getInverseView();
-                systemSet.pointLightSystem.update(frameInfo, ubo);
+                systemSet->pointLightSystem.update(frameInfo, ubo);
                 uboBuffers[frameIndex]->writeToBuffer(&ubo);
                 uboBuffers[frameIndex]->flush();
 
@@ -126,22 +125,24 @@ namespace lth {
                 // Dispatch the compute work.
 
                 lthRenderer.beginComputes();
-                systemSet.particleSystem.dispatch(frameInfo, computeDescriptorSets[frameIndex]);
+                systemSet->particleSystem.dispatch(frameInfo, computeDescriptorSets[frameIndex]);
                 lthRenderer.endComputes();
 
                 // Render the scene.
 
 				lthRenderer.beginSwapChainRenderPass(graphicsCommandBuffer);
-                systemSet.renderSystem.render(frameInfo);
-                systemSet.pointLightSystem.render(frameInfo);
-                systemSet.particleSystem.render(frameInfo);
+                systemSet->renderSystem.render(frameInfo);
+                systemSet->pointLightSystem.render(frameInfo);
+                systemSet->particleSystem.render(frameInfo);
 
                 // Render the UI.
 
                 ImGui_ImplVulkan_NewFrame();
                 ImGui_ImplGlfw_NewFrame();
                 ImGui::NewFrame();
-                ImGui::ShowDemoWindow();
+
+                showImGui();
+
                 ImGui::Render();
                 ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), graphicsCommandBuffer, nullptr);
 
@@ -160,6 +161,8 @@ namespace lth {
     void App::update(float dt) {
 
         cameraController.moveInPlaneXZ(lthWindow.getGLFWwindow(), dt, viewerTransform);
+        if (!activateUpdate) return;
+
     }
 
 	void App::loadScene() {
@@ -316,5 +319,20 @@ namespace lth {
 
         ImGui_ImplVulkan_CreateFontsTexture();
         ImGui_ImplVulkan_DestroyFontsTexture();
+    }
+
+    void App::showImGui() {
+        ImGui::Begin("Frame manager");
+
+        ImGui::Checkbox("Update scene", &activateUpdate);
+        
+        ImGui::BeginChild("Systems");
+        ImGui::Checkbox("Render main system", &systemSet->renderSystem.activateRender);
+        ImGui::Checkbox("Render point light system", &systemSet->pointLightSystem.activateRender);
+        ImGui::Checkbox("Render particle system", &systemSet->particleSystem.activateRender);
+        ImGui::Checkbox("Compute particle system", &systemSet->particleSystem.activateCompute);
+        ImGui::EndChild();
+
+        ImGui::End();
     }
 }

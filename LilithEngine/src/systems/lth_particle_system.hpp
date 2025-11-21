@@ -45,10 +45,10 @@ namespace lth {
 
 	static constexpr uint32_t PARTICLE_COUNT = 1024;
 
-	class LthParticleSystem : LthGraphicsSystem {
-		inline static std::string vertexShaderSpvPath = SHADERSFOLDERPATH("particle.vert.spv");
-		inline static std::string fragmentShaderSpvPath = SHADERSFOLDERPATH("particle.frag.spv");
-		inline static std::string computeShaderSpvPath = SHADERSFOLDERPATH("particle.comp.spv");
+	class LthParticleSystem : public LthGraphicsSystem {
+		inline static std::string vertexShaderSpvPath = SHADERSFOLDERPATH("particle.vert");
+		inline static std::string fragmentShaderSpvPath = SHADERSFOLDERPATH("particle.frag");
+		inline static std::string computeShaderSpvPath = SHADERSFOLDERPATH("particle.comp");
 
 	public:
 
@@ -66,6 +66,7 @@ namespace lth {
 
 		static void createStorageBuffer(LthDevice&, std::vector<std::unique_ptr<LthBuffer>>&);
 
+		bool activateCompute = true;
 	private:
 		//void createPipelineLayout(DescriptorSetLayouts& setLayouts);
 		void createPipeline(VkRenderPass renderPass);

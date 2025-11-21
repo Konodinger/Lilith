@@ -10,9 +10,9 @@
 
 namespace lth {
 
-	class LthPointLightSystem : LthGraphicsSystem {
-		inline static std::string vertexShaderSpvPath = SHADERSFOLDERPATH("pointLight.vert.spv");
-		inline static std::string fragmentShaderSpvPath = SHADERSFOLDERPATH("pointLight.frag.spv");
+	class LthPointLightSystem : public LthGraphicsSystem {
+		inline static std::string vertexShaderSpvPath = SHADERSFOLDERPATH("pointLight.vert");
+		inline static std::string fragmentShaderSpvPath = SHADERSFOLDERPATH("pointLight.frag");
 
 	public:
 

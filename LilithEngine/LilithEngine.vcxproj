@@ -247,6 +247,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="shadersCompile.bat" />
+    <None Include="shaders\rayTracing\standardRT.rahit" />
+    <None Include="shaders\rayTracing\standardRT.rchit" />
+    <None Include="shaders\rayTracing\standardRT.rgen" />
+    <None Include="shaders\rayTracing\standardRT.rmiss" />
     <None Include="shaders\standard.frag" />
     <None Include="shaders\standard.frag.spv" />
     <None Include="shaders\particle.comp" />

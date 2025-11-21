@@ -44,6 +44,8 @@ namespace lth {
 	}
 
 	void LthRenderSystem::render(FrameInfo& frameInfo) {
+		if (!activateRender) return;
+
 		lthGraphicsPipeline->bind(frameInfo.graphicsCommandBuffer);
 
 		vkCmdBindDescriptorSets(
