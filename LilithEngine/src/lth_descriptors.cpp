@@ -183,6 +183,32 @@ namespace lth {
         return *this;
     }
 
+
+    LthDescriptorWriter& LthDescriptorWriter::writeTLAS(uint32_t binding, VkDescriptorBufferInfo* bufferInfo, VkWriteDescriptorSetAccelerationStructureKHR& tlasDescriptorInfo) {
+        assert(setLayout.bindings.count(binding) == 1 && "Layout does not contain specified binding.");
+
+        auto& bindingDescription = setLayout.bindings[binding];
+
+        assert(
+            bindingDescription.descriptorCount == 1 &&
+            "Binding single descriptor info, but binding expects multiple.");
+
+
+        assert(bindingDescription.descriptorType == VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR &&
+            "Expected to bind an acceleration structure descriptor, but got another type in the layout.");
+
+        VkWriteDescriptorSet write{};
+        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.descriptorType = bindingDescription.descriptorType;
+        write.dstBinding = binding;
+        write.pBufferInfo = bufferInfo;
+        write.descriptorCount = 1;
+        write.pNext = &tlasDescriptorInfo;
+
+        writes.push_back(write);
+        return *this;
+    }
+
     bool LthDescriptorWriter::build(VkDescriptorSet& set) {
         bool success = pool.allocateDescriptorSets(setLayout.getDescriptorSetLayout(), set, static_cast<uint32_t>(writes.size()));
         if (!success) {

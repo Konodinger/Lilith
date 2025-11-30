@@ -9,6 +9,12 @@
 #include <memory>
 
 namespace lth {
+    class LthTexture;
+
+    enum RenderPassType {
+        LTH_RP_MAIN,
+        LTH_RP_GUI,
+    };
 
 class LthSwapChain {
  public:
@@ -20,8 +26,10 @@ class LthSwapChain {
   LthSwapChain(const LthSwapChain &) = delete;
   LthSwapChain &operator=(const LthSwapChain &) = delete;
 
-  VkFramebuffer getFrameBuffer(int index) { return swapChainFramebuffers[index]; }
-  VkRenderPass getRenderPass() { return renderPass; }
+  VkFramebuffer getMainFrameBuffer(int index) { return mainFramebuffers[index]; }
+  VkFramebuffer getGuiFrameBuffer(int index) { return guiFramebuffers[index]; }
+  VkRenderPass getMainRenderPass() { return mainRenderPass; }
+  VkRenderPass getGuiRenderPass() { return guiRenderPass; }
   VkImageView getImageView(int index) { return swapChainImageViews[index]; }
   size_t imageCount() { return swapChainImages.size(); }
   VkFormat getSwapChainImageFormat() { return swapChainImageFormat; }
@@ -35,8 +43,10 @@ class LthSwapChain {
   VkFormat findDepthFormat();
 
   VkResult acquireNextImage(uint32_t *imageIndex);
-  void submitComputeCommandBuffers(const VkCommandBuffer *buffer);
-  VkResult submitGraphicsCommandBuffers(const VkCommandBuffer *buffer, uint32_t *imageIndex);
+  void copyImageToSwapChain(VkCommandBuffer commandBuffer, LthTexture& sourceImage, uint32_t imageIndex);
+  void submitComputeCommandBuffers(const VkCommandBuffer * commandBuffer, uint32_t imageIndex);
+  void submitGraphicsCommandBuffers(const VkCommandBuffer * commandBuffer, uint32_t imageIndex);
+  VkResult presentAndEndFrame(uint32_t imageIndex);
 
   bool compareSwapFormats(const LthSwapChain& swapChain) const {
       return swapChain.swapChainDepthFormat == swapChainDepthFormat &&
@@ -64,8 +74,10 @@ class LthSwapChain {
   VkFormat swapChainDepthFormat;
   VkExtent2D swapChainExtent;
 
-  std::vector<VkFramebuffer> swapChainFramebuffers;
-  VkRenderPass renderPass;
+  std::vector<VkFramebuffer> mainFramebuffers;
+  std::vector<VkFramebuffer> guiFramebuffers;
+  VkRenderPass mainRenderPass;
+  VkRenderPass guiRenderPass;
 
   std::vector<VkImage> colorImages;
   std::vector<VkDeviceMemory> colorImageMemories;
@@ -82,16 +94,13 @@ class LthSwapChain {
 
   VkSwapchainKHR swapChain;
   std::shared_ptr<LthSwapChain> oldSwapChain;
-  uint32_t swapChainImageCount;
 
-  std::vector<VkSemaphore> computeFinishedSemaphores;
-  std::vector<VkSemaphore> imageAvailableSemaphores;
-  std::vector<VkSemaphore> renderFinishedSemaphores;
+  std::vector<std::pair<VkSemaphore, bool>> computeFinishedSemaphores; // The bool is to check if the semaphore is signaled.
+  std::vector<std::pair<VkSemaphore, bool>> renderFinishedSemaphores;
+  std::vector<std::pair<VkSemaphore, bool>> imageAvailableSemaphores;
   std::vector<VkFence> computeInFlightFences;
-  std::vector<VkFence> inFlightFences;
-  std::vector<VkFence> imagesInFlight;
+  std::vector<VkFence> renderInFlightFences;
   size_t currentFrame = 0;
-  size_t currentSemaphore = 0;
 };
 
 }

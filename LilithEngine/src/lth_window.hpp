@@ -17,9 +17,9 @@ namespace lth {
 		LthWindow(const LthWindow&) = delete;
 		LthWindow& operator=(const LthWindow&) = delete;
 
-		bool shouldClose() { return glfwWindowShouldClose(window); }
-		VkExtent2D getExtent() { return { static_cast<uint32_t>(width), static_cast<uint32_t>(height) }; }
-		bool wasWindowResized() { return framebufferResized; }
+		bool shouldClose() const { return glfwWindowShouldClose(window); }
+		VkExtent2D getExtent() const { return { static_cast<uint32_t>(width), static_cast<uint32_t>(height) }; }
+		bool wasWindowResized() const { return framebufferResized; }
 		void resetWindowResizedFlag() { framebufferResized = false; }
 		GLFWwindow* getGLFWwindow() const { return window; }
 

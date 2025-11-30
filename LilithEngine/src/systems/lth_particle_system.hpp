@@ -61,7 +61,7 @@ namespace lth {
 		LthParticleSystem(const LthParticleSystem&) = delete;
 		LthParticleSystem& operator=(const LthParticleSystem&) = delete;
 
-		void dispatch(FrameInfo& frameInfo, VkDescriptorSet computeDescriptorSet);
+		void dispatch(FrameInfo& frameInfo, VkDescriptorSet& computeDescriptorSet);
 		void render(FrameInfo& frameInfo);
 
 		static void createStorageBuffer(LthDevice&, std::vector<std::unique_ptr<LthBuffer>>&);

@@ -28,7 +28,9 @@ namespace lth {
         generalDescriptorPool = LthDescriptorPool::Builder(lthDevice)
             .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, GLOBALPOOLMAXSETS)
             .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, GLOBALPOOLMAXSETS)
+            .addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, GLOBALPOOLMAXSETS)
             .addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, MAX_FRAMES_IN_FLIGHT * 3)
+            .addPoolSize(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, MAX_FRAMES_IN_FLIGHT)
             .setMaxSets(GLOBALPOOLMAXSETS)
             .setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
             .build();
@@ -49,7 +51,7 @@ namespace lth {
 
         systemSet = std::make_unique<LthSystemSet>(
             lthDevice,
-            lthRenderer.getSwapChainRenderPass(),
+            lthRenderer.getSwapChainMainRenderPass(),
             setLayouts,
             cboBuffers
         );
@@ -124,18 +126,32 @@ namespace lth {
 
                 // Dispatch the compute work.
 
-                lthRenderer.beginComputes();
-                systemSet->particleSystem.dispatch(frameInfo, computeDescriptorSets[frameIndex]);
-                lthRenderer.endComputes();
-
+                if (systemSet->particleSystem.activateCompute) {
+                    lthRenderer.beginComputes();
+                    systemSet->particleSystem.dispatch(frameInfo, computeDescriptorSets[frameIndex]);
+                    lthRenderer.endComputes();
+                }
+                
                 // Render the scene.
 
-				lthRenderer.beginSwapChainRenderPass(graphicsCommandBuffer);
+				lthRenderer.beginSwapChainRenderPass(graphicsCommandBuffer, LTH_RP_MAIN);
+                
                 systemSet->renderSystem.render(frameInfo);
                 systemSet->pointLightSystem.render(frameInfo);
                 systemSet->particleSystem.render(frameInfo);
 
+                lthRenderer.endSwapChainRenderPass(graphicsCommandBuffer);
+
+                // Ray trace through the scene.
+                
+                if (systemSet->rayTracingSystem.activateTrace) {
+                    systemSet->rayTracingSystem.trace(frameInfo, rayTracingDescriptorSets[frameIndex]);
+                    lthRenderer.copyImageToSwapChain(rtOutputImage);
+                }
+
                 // Render the UI.
+
+                lthRenderer.beginSwapChainRenderPass(graphicsCommandBuffer, LTH_RP_GUI);
 
                 ImGui_ImplVulkan_NewFrame();
                 ImGui_ImplGlfw_NewFrame();
@@ -146,10 +162,9 @@ namespace lth {
                 ImGui::Render();
                 ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), graphicsCommandBuffer, nullptr);
 
-
-                // End render pass.
-
 				lthRenderer.endSwapChainRenderPass(graphicsCommandBuffer);
+
+                // End frame.
 				lthRenderer.endFrame();
 			}
         }
@@ -230,18 +245,23 @@ namespace lth {
 
     void App::createDescriptorSets() {
         setLayouts.globalSetLayout = LthDescriptorSetLayout::Builder(lthDevice)
-            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL)
             .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, TEXTUREARRAYSIZE)
             .build();
 
         setLayouts.gameObjectSetLayout = LthDescriptorSetLayout::Builder(lthDevice)
-            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL)
             .build();
 
         setLayouts.computeSetLayout = LthDescriptorSetLayout::Builder(lthDevice)
             //.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT)
             .addBinding(0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT)
             .addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT)
+            .build();
+
+        setLayouts.rayTracingSetLayout = LthDescriptorSetLayout::Builder(lthDevice)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, VK_SHADER_STAGE_ALL)
+            .addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_ALL)
             .build();
 
 
@@ -287,6 +307,21 @@ namespace lth {
                 .build(computeDescriptorSets[i]);
         }
 
+        // Ray tracing descriptor sets.
+        auto descriptorTLASInfo = scene.getTLASInfos();
+        auto tlasDescriptorInfo = scene.getTLASDescriptorInfo();
+        VkDescriptorImageInfo rtOutputImageInfo{};
+        rtOutputImageInfo.imageLayout = rtOutputImage.getLayout();
+        rtOutputImageInfo.imageView = rtOutputImage.textureImageView;
+
+        rayTracingDescriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
+        for (int i = 0; i < rayTracingDescriptorSets.size(); ++i) {
+            LthDescriptorWriter(*setLayouts.rayTracingSetLayout, *generalDescriptorPool)
+                .writeTLAS(0, &descriptorTLASInfo, tlasDescriptorInfo)
+                .writeImage(1, &rtOutputImageInfo)
+                .build(rayTracingDescriptorSets[i]);
+        }
+
 
         // Game objects descriptor sets.
 
@@ -314,7 +349,7 @@ namespace lth {
             return vkGetInstanceProcAddr(*(reinterpret_cast<VkInstance*>(vulkan_instance)), function_name);
             }, (void *) &lthDevice.getInstance());
         ImGui_ImplVulkan_InitInfo initInfo = lthDevice.getImGuiInitInfo(generalDescriptorPool->getDescriptorPool(), static_cast<uint32_t>(lthRenderer.getSwapChainImageCount()));
-        ImGui_ImplVulkan_Init(&initInfo, lthRenderer.getSwapChainRenderPass());
+        ImGui_ImplVulkan_Init(&initInfo, lthRenderer.getSwapChainGuiRenderPass());
 
 
         ImGui_ImplVulkan_CreateFontsTexture();
@@ -325,12 +360,14 @@ namespace lth {
         ImGui::Begin("Frame manager");
 
         ImGui::Checkbox("Update scene", &activateUpdate);
+        ImGui::Checkbox("Compute particle system", &systemSet->particleSystem.activateCompute);
         
         ImGui::BeginChild("Systems");
+        ImGui::Text("Systems");
         ImGui::Checkbox("Render main system", &systemSet->renderSystem.activateRender);
         ImGui::Checkbox("Render point light system", &systemSet->pointLightSystem.activateRender);
         ImGui::Checkbox("Render particle system", &systemSet->particleSystem.activateRender);
-        ImGui::Checkbox("Compute particle system", &systemSet->particleSystem.activateCompute);
+        ImGui::Checkbox("Ray tracing system", &systemSet->rayTracingSystem.activateTrace);
         ImGui::EndChild();
 
         ImGui::End();

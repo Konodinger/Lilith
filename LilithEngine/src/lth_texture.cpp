@@ -7,15 +7,48 @@
 
 namespace lth {
 
+	// Special constructor for creating an image copying the swapChain images.
+	LthTexture::LthTexture(id_t texId, LthDevice& device, const LthRenderer& renderer)
+		: LthSceneElement(texId), lthDevice{ device },
+		texWidth{ static_cast<uint32_t>(renderer.getSwapChainImageExtent().width)},
+		texHeight{static_cast<uint32_t>(renderer.getSwapChainImageExtent().height)},
+		texFormat{ renderer.getSwapChainImageFormat() }, mipLevels{ 1 } {
+		
+		if (texFormat == VK_FORMAT_B8G8R8A8_SRGB) {
+			texFormat = VK_FORMAT_B8G8R8A8_UNORM;
+		}
+
+		lthDevice.createImage(
+			texWidth,
+			texHeight,
+			texFormat,
+			VK_IMAGE_TILING_OPTIMAL,
+			VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_STORAGE_BIT,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			textureImage,
+			textureImageMemory,
+			mipLevels,
+			VK_SAMPLE_COUNT_1_BIT);
+
+		transitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		VkClearColorValue defaultColor = { 0.f, 0.f, 0.f, 0.f };
+		clearImage(&defaultColor);
+		transitionImageLayout(VK_IMAGE_LAYOUT_GENERAL);
+		createTextureImageView();
+		createTextureSampler();
+	}
+
 	LthTexture::LthTexture(id_t texId, LthDevice& device, const LthTexture::Builder& builder, bool generateMipMaps) :
-		LthSceneElement(texId), lthDevice{ device }, texWidth{ static_cast<uint32_t>(builder.texWidth) }, texHeight{ static_cast<uint32_t>(builder.texHeight) },
-		pixelSize{ builder.pixelSize }, texFormat{ builder.texFormat } {
+		LthSceneElement(texId), lthDevice{ device },
+		texWidth{ static_cast<uint32_t>(builder.texWidth) },
+		texHeight{ static_cast<uint32_t>(builder.texHeight) },
+		texFormat{ builder.texFormat } {
 		
 
 		mipLevels = generateMipMaps ?
 			static_cast<uint32_t>(floor(log2(std::max(texWidth, texHeight)))) + 1 :
 			1;
-		createTextureImage(builder.pixels);
+		createTextureImage(builder.pixels, builder.pixelSize);
 		createTextureImageView();
 		createTextureSampler();
 	}
@@ -54,7 +87,7 @@ namespace lth {
 		return std::make_shared<LthTexture>(texId, device, builder, generateMipmaps);
 	}
 
-    void LthTexture::createTextureImage(stbi_uc* pixels) {
+    void LthTexture::createTextureImage(stbi_uc* pixels, VkDeviceSize pixelSize) {
 
 		uint32_t pixelCount = texWidth * texHeight;
 		LthBuffer stagingBuffer{
@@ -82,24 +115,16 @@ namespace lth {
 			mipLevels,
 			VK_SAMPLE_COUNT_1_BIT);
 
-		lthDevice.transitionImageLayout(textureImage,
-			texFormat,
-			VK_IMAGE_LAYOUT_UNDEFINED,
-			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-			mipLevels);
+		transitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 		lthDevice.copyBufferToImage(stagingBuffer.getBuffer(),
 			textureImage,
 			texWidth,
 			texHeight,
 			1);
 		if (mipLevels == 1) {
-			lthDevice.transitionImageLayout(textureImage,
-				texFormat,
-				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-				mipLevels);
+			transitionImageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		} else {
-			lthDevice.generateMipmaps(textureImage, texFormat, texWidth, texHeight, mipLevels);
+			generateMipmaps(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);			
 		}
     }
 
@@ -132,9 +157,35 @@ namespace lth {
 
 	}
 
+	void LthTexture::generateMipmaps(VkImageLayout newImageLayout) {
+		if (currentImageLayout != VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+			transitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		}
+		lthDevice.generateMipmaps(textureImage, texFormat, texWidth, texHeight, mipLevels, newImageLayout);
+
+		currentImageLayout = newImageLayout;
+	}
+
+	void LthTexture::transitionImageLayout(VkImageLayout imageLayout) {
+		lthDevice.transitionImageLayout(textureImage,
+			texFormat,
+			currentImageLayout,
+			imageLayout,
+			mipLevels);
+		currentImageLayout = imageLayout;
+	}
+
+
+	void LthTexture::clearImage(VkClearColorValue* clearColor) {
+		VkCommandBuffer commandBuffer = lthDevice.beginSingleTimeCommands();
+		VkImageSubresourceRange imageRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, mipLevels, 0, 1 };
+		vkCmdClearColorImage(commandBuffer, textureImage, currentImageLayout, clearColor, 1, &imageRange);
+		lthDevice.endSingleTimeCommands(commandBuffer);
+	}
+
 	VkDescriptorImageInfo LthTexture::imageInfo() {
 		VkDescriptorImageInfo imageInfo{};
-		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo.imageLayout = currentImageLayout;
 		imageInfo.imageView = textureImageView;
 		imageInfo.sampler = textureSampler;
 

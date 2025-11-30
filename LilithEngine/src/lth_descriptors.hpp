@@ -16,6 +16,7 @@ namespace lth {
         std::unique_ptr<LthDescriptorSetLayout> globalSetLayout{};
         std::unique_ptr<LthDescriptorSetLayout> gameObjectSetLayout{};
         std::unique_ptr<LthDescriptorSetLayout> computeSetLayout{};
+        std::unique_ptr<LthDescriptorSetLayout> rayTracingSetLayout{};
     };
 
     class LthDescriptorSetLayout {
@@ -99,6 +100,7 @@ namespace lth {
 
         LthDescriptorWriter& writeBuffer(uint32_t binding, VkDescriptorBufferInfo* bufferInfo);
         LthDescriptorWriter& writeImage(uint32_t binding, VkDescriptorImageInfo* imageInfo, uint32_t count = 1);
+        LthDescriptorWriter& writeTLAS(uint32_t binding, VkDescriptorBufferInfo* bufferInfo, VkWriteDescriptorSetAccelerationStructureKHR& tlasDescriptorInfo);
 
         bool build(VkDescriptorSet& set);
         void overwrite(VkDescriptorSet& set);

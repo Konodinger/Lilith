@@ -4,11 +4,6 @@
 #include <array>
 
 namespace lth {
-	
-	struct SimplePushConstantData {
-		glm::mat4 modelMatrix{ 1.f };
-		glm::mat4 normalMatrix{ 1.f };
-	};
 
 	LthRenderSystem::LthRenderSystem(
 		LthDevice& device,

@@ -118,8 +118,9 @@ namespace lth {
 		if (vkEndCommandBuffer(graphicsCommandBuffer) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to record graphics command buffer " + std::to_string(currentImageIndex) + "!");
 		}
+		lthSwapChain->submitGraphicsCommandBuffers(&graphicsCommandBuffer, currentImageIndex);
 		
-		auto result = lthSwapChain->submitGraphicsCommandBuffers(&graphicsCommandBuffer, &currentImageIndex);
+		auto result = lthSwapChain->presentAndEndFrame(currentImageIndex);
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || lthWindow.wasWindowResized()) {
 			lthWindow.resetWindowResizedFlag();
 			recreateSwapChain();
@@ -139,18 +140,27 @@ namespace lth {
 			throw std::runtime_error("Failed to record compute command buffer " + std::to_string(currentImageIndex) + "!");
 		}
 
-		lthSwapChain->submitComputeCommandBuffers(&computeCommandBuffer);
+		lthSwapChain->submitComputeCommandBuffers(&computeCommandBuffer, currentImageIndex);
 
 	}
 
-	void LthRenderer::beginSwapChainRenderPass(VkCommandBuffer graphicsCommandBuffer) {
+	void LthRenderer::beginSwapChainRenderPass(VkCommandBuffer graphicsCommandBuffer, RenderPassType renderPassType) {
 		assert(isFrameStarted && "Can't call beginSwapChainRenderPass if frame is not in progress.");
 		assert(graphicsCommandBuffer == getCurrentGraphicsCommandBuffer() && "Can't begin render pass on command buffer from a different frame.");
 
 		VkRenderPassBeginInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = lthSwapChain->getRenderPass();
-		renderPassInfo.framebuffer = lthSwapChain->getFrameBuffer(currentImageIndex);
+
+		switch (renderPassType) {
+		case LTH_RP_MAIN:
+			renderPassInfo.renderPass = lthSwapChain->getMainRenderPass();
+			renderPassInfo.framebuffer = lthSwapChain->getMainFrameBuffer(currentImageIndex);
+			break;
+		case LTH_RP_GUI:
+			renderPassInfo.renderPass = lthSwapChain->getGuiRenderPass();
+			renderPassInfo.framebuffer = lthSwapChain->getGuiFrameBuffer(currentImageIndex);
+			break;
+		}
 
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = lthSwapChain->getSwapChainExtent();
@@ -181,6 +191,11 @@ namespace lth {
 		assert(graphicsCommandBuffer == getCurrentGraphicsCommandBuffer() && "Can't end render pass on command buffer from a different frame.");
 
 		vkCmdEndRenderPass(graphicsCommandBuffer);
+	}
+
+	void LthRenderer::copyImageToSwapChain(LthTexture& image) {
+		auto graphicsCommandBuffer = getCurrentGraphicsCommandBuffer();
+		lthSwapChain->copyImageToSwapChain(graphicsCommandBuffer, image, currentImageIndex);
 	}
 
 }

@@ -123,6 +123,12 @@
     <ClCompile Include="src\lth_acceleration_structure.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
+    <ClCompile Include="src\pipelines\lth_ray_tracing_pipeline.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\lth_ray_tracing_system.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\app.hpp">
@@ -264,5 +270,9 @@
     </None>
     <None Include="shaders\particle.frag.spv" />
     <None Include="shaders\particle.vert.spv" />
+    <None Include="shaders\rayTracing\standardRT.rahit" />
+    <None Include="shaders\rayTracing\standardRT.rchit" />
+    <None Include="shaders\rayTracing\standardRT.rgen" />
+    <None Include="shaders\rayTracing\standardRT.rmiss" />
   </ItemGroup>
 </Project>

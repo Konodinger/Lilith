@@ -10,6 +10,11 @@
 
 namespace lth {
 
+	struct SimplePushConstantData {
+		glm::mat4 modelMatrix{ 1.f };
+		glm::mat4 normalMatrix{ 1.f };
+	};
+
 	class LthRenderSystem : public LthGraphicsSystem {
 		inline static std::string vertexShaderSpvPath = SHADERSFOLDERPATH("standard.vert");
 		inline static std::string fragmentShaderSpvPath = SHADERSFOLDERPATH("standard.frag");

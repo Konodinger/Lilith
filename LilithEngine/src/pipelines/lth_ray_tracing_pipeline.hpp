@@ -2,9 +2,12 @@
 #define __LTH_RAY_TRACING_PIPELINE_HPP__
 
 #include "lth_pipeline.hpp"
+#include "../lth_buffer.hpp"
 
 #include <string>
+#include <memory>
 #include <vector>
+#include <glm/glm.hpp>
 
 namespace lth {
 
@@ -17,9 +20,8 @@ namespace lth {
 	};
 
 	struct LthRayTracingPipelineFilePaths {
-		LthRayTracingPipelineFilePaths() = default;
 		std::string rayGenFilePath = "";
-		std::string aniHitFilePath = "";
+		std::string anyHitFilePath = "";
 		std::string chitFilePath = "";
 		std::string missFilePath = "";
 	};
@@ -29,24 +31,37 @@ namespace lth {
 		LthRayTracingPipeline(
 			LthDevice& device,
 			VkPipelineLayout& pipelineLayout,
-			const std::string& computeFilePath);
+			const LthRayTracingPipelineFilePaths& rayTracingFilePaths);
 		~LthRayTracingPipeline() override;
 
 		LthRayTracingPipeline() = default;
 		LthRayTracingPipeline(const LthRayTracingPipeline&) = delete;
 		LthRayTracingPipeline& operator=(const LthRayTracingPipeline&) = delete;
 
-		static void defaultRayTracingPipelineConfigInfo(LthRayTracingPipelineConfigInfo& configInfo);
-
 		void bind(VkCommandBuffer commandBuffer) override;
+		void trace(VkCommandBuffer commandBuffer);
 	private:
 		void createRayTracingPipeline(
 			VkPipelineLayout& pipelineLayout,
 			const LthRayTracingPipelineFilePaths& rayTracingFilePaths);
+		void createShaderBindingTable(VkRayTracingPipelineCreateInfoKHR& rtPipelineCreateInfo);
 
 
 		VkPipeline rayTracingPipeline;
-		VkShaderModule rayTracingShaderModule;
+		VkShaderModule rayGenShaderModule;
+		VkShaderModule anyHitShaderModule;
+		VkShaderModule chitShaderModule;
+		VkShaderModule missShaderModule;
+		//VkShaderModule callableShaderModule;
+
+		std::vector<uint8_t> shaderHandles{};
+		std::unique_ptr<LthBuffer> sbtBuffer;
+		VkStridedDeviceAddressRegionKHR rayGenRegion{};
+		VkStridedDeviceAddressRegionKHR missRegion{};
+		VkStridedDeviceAddressRegionKHR chitRegion{};
+		VkStridedDeviceAddressRegionKHR anyHitGenRegion{};
+		VkStridedDeviceAddressRegionKHR callableRegion{};
+		
 	};
 }
 

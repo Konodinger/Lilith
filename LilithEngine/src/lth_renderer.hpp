@@ -20,9 +20,11 @@ namespace lth {
 		LthRenderer(const LthRenderer&) = delete;
 		LthRenderer& operator=(const LthRenderer&) = delete;
 
-		VkRenderPass getSwapChainRenderPass() const { return lthSwapChain->getRenderPass(); }
+		VkRenderPass getSwapChainMainRenderPass() const { return lthSwapChain->getMainRenderPass(); }
+		VkRenderPass getSwapChainGuiRenderPass() const { return lthSwapChain->getGuiRenderPass(); }
 		size_t getSwapChainImageCount() const { return lthSwapChain->imageCount(); }
 		VkFormat getSwapChainImageFormat() const { return lthSwapChain->getSwapChainImageFormat(); }
+		VkExtent2D getSwapChainImageExtent() const { return lthSwapChain->getSwapChainExtent(); }
 		float getAspectRatio() const { return lthSwapChain->extentAspectRatio(); }
 		bool isFrameInProgress() const { return isFrameStarted; }
 
@@ -45,7 +47,8 @@ namespace lth {
 		bool beginComputes();
 		void endFrame();
 		void endComputes();
-		void beginSwapChainRenderPass(VkCommandBuffer commandBuffer);
+		void copyImageToSwapChain(LthTexture& image); // For ray tracing purposes. Must be called during a frame rendering step.
+		void beginSwapChainRenderPass(VkCommandBuffer commandBuffer, RenderPassType renderPassType);
 		void endSwapChainRenderPass(VkCommandBuffer commandBuffer);
 
 	private:
@@ -59,8 +62,8 @@ namespace lth {
 		std::vector<VkCommandBuffer> graphicsCommandBuffers;
 		std::vector<VkCommandBuffer> computeCommandBuffers;
 
-		uint32_t currentImageIndex;
-		int currentFrameIndex{ 0 };
+		uint32_t currentImageIndex; // Index of the image of the swap chain we're working on (<= swapChainImageCount)
+		int currentFrameIndex{ 0 }; // Index of the frame we're working on (<= MAX_FRAME_IN_FLIGHT <= swapChainImageCount)
 		bool isFrameStarted{ false };
 	};
 }

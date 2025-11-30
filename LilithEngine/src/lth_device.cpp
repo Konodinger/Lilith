@@ -83,14 +83,17 @@ namespace lth {
         accelStructFeatures.accelerationStructure = VK_TRUE;
         rayTracingFeatures.pNext = &accelStructFeatures;
         rayTracingFeatures.rayTracingPipeline = VK_TRUE;
-        physicalDeviceFeatures1_2.pNext = &rayTracingFeatures;
+        physicalDeviceFeatures1_3.pNext = &rayTracingFeatures;
+        physicalDeviceFeatures1_3.shaderDemoteToHelperInvocation = VK_TRUE;
+        physicalDeviceFeatures1_2.pNext = &physicalDeviceFeatures1_3;
         physicalDeviceFeatures1_2.bufferDeviceAddress = VK_TRUE;
         physicalDeviceFeatures2.pNext = &physicalDeviceFeatures1_2;
         physicalDeviceFeatures2.features.samplerAnisotropy = VK_TRUE;
         physicalDeviceFeatures2.features.sampleRateShading = VK_TRUE;
 
         rayTracingFeatures_Get.pNext = &accelStructFeatures_Get;
-        physicalDeviceFeatures1_2_Get.pNext = &rayTracingFeatures_Get;
+        physicalDeviceFeatures1_3_Get.pNext = &rayTracingFeatures_Get;
+        physicalDeviceFeatures1_2_Get.pNext = &physicalDeviceFeatures1_3_Get;
         physicalDeviceFeatures2_Get.pNext = &physicalDeviceFeatures1_2_Get;
 
         if (volkInitialize() != VK_SUCCESS) {
@@ -699,29 +702,41 @@ namespace lth {
         VkPipelineStageFlags sourceStage;
         VkPipelineStageFlags destinationStage;
 
-        if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
-            barrier.srcAccessMask = 0;
-            barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-
+        switch (oldLayout) {
+        case VK_IMAGE_LAYOUT_UNDEFINED:
+            barrier.srcAccessMask = VK_ACCESS_NONE;
             sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-            destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-        }
-        else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+            break;
+        case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
             barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-            barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
             sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-            destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+            break;
+        case VK_IMAGE_LAYOUT_GENERAL:
+            barrier.srcAccessMask = VK_ACCESS_NONE;
+            sourceStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+        default:
+            throw std::invalid_argument("Unsupported layout transition! (Unexpected initial layout)");
         }
-        else if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
-            barrier.srcAccessMask = 0;
-            barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
-            sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        switch (newLayout) {
+        case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+            barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+            break;
+        case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+            barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+            destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+            break;
+        case VK_IMAGE_LAYOUT_GENERAL:
+            barrier.dstAccessMask = VK_ACCESS_NONE;
+            destinationStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+            break;
+        case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+            barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
             destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-        }
-        else {
-            throw std::invalid_argument("Unsupported layout transition!");
+            break;
+        default:
+            throw std::invalid_argument("Unsupported layout transition! (Unexpected new layout)");
         }
 
         vkCmdPipelineBarrier(
@@ -766,7 +781,8 @@ namespace lth {
         VkFormat format,
         int32_t texWidth,
         int32_t texHeight,
-        uint32_t mipLevels) {
+        uint32_t mipLevels,
+        VkImageLayout newImageLayout) {
 
         VkFormatProperties formatProperties;
         vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &formatProperties);
@@ -828,7 +844,7 @@ namespace lth {
                 VK_FILTER_LINEAR);
 
             barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-            barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            barrier.newLayout = newImageLayout;
             barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
             barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
@@ -841,7 +857,7 @@ namespace lth {
 
         barrier.subresourceRange.baseMipLevel = mipLevels - 1;
         barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        barrier.newLayout = newImageLayout;
         barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
         barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 

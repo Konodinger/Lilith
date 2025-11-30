@@ -17,10 +17,8 @@ layout(set = 0, binding = 0) uniform GlobalUbo {
 } globUbo;
 
 layout(set = 1, binding = 0) uniform accelerationStructureEXT Tlas;
-layout(set = 1, binding = 0) uniform GameObjectUbo {
-	bool usesColorTexture;
-	uint textureId;
-} goUbo;
+layout(set = 1, binding = 1) uniform writeonly image2D outputImage;
+
 
 layout(push_constant) uniform Push {
 	mat4 modelMatrix;
@@ -50,6 +48,6 @@ void main() {
 
     traceRayEXT(Tlas, gl_RayFlagsOpaqueEXT, 0xff, 0, 0, 0, origin.xyz, tmin, direction.xyz, tmax, 0);
 
-	//imageStore(image, ivec2(gl_LaunchIDEXT.xy), vec4(hitValue, 0.0));
+	imageStore(outputImage, ivec2(gl_LaunchIDEXT.xy), vec4(gl_LaunchIDEXT.xy / 800.f, 0.5, 0.0));
 
 }

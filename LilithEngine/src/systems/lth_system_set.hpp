@@ -4,11 +4,13 @@
 #include "lth_render_system.hpp"
 #include "lth_point_light_system.hpp"
 #include "lth_particle_system.hpp"
+#include "lth_ray_tracing_system.hpp"
 
 namespace lth {
 
 	struct LthSystemSet {
 		LthRenderSystem renderSystem;
+		LthRayTracingSystem rayTracingSystem;
 		LthPointLightSystem pointLightSystem;
 		LthParticleSystem particleSystem;
 
@@ -18,6 +20,7 @@ namespace lth {
 			std::vector<std::unique_ptr<LthBuffer>>& cboBuffers) :
 			particleSystem(device, renderPass, setLayouts, cboBuffers),
 			renderSystem(device, renderPass, setLayouts),
+			rayTracingSystem(device, renderPass, setLayouts),
 			pointLightSystem(device, renderPass, setLayouts){};
 	};
 }

@@ -201,9 +201,11 @@
     <ClCompile Include="src\lth_utils.hpp" />
     <ClCompile Include="src\lth_window.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\pipelines\lth_ray_tracing_pipeline.cpp" />
     <ClCompile Include="src\systems\lth_graphics_system.hpp" />
     <ClCompile Include="src\systems\lth_particle_system.cpp" />
     <ClCompile Include="src\systems\lth_point_light_system.cpp" />
+    <ClCompile Include="src\systems\lth_ray_tracing_system.cpp" />
     <ClCompile Include="src\systems\lth_render_system.cpp" />
     <ClCompile Include="src\systems\lth_system.cpp" />
   </ItemGroup>

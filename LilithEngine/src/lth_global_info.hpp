@@ -30,6 +30,8 @@ namespace lth {
 	static constexpr float MAX_FRAME_TIME = 0.25f;
 	static constexpr float UPDATE_DT = 0.01f;
 	static constexpr float UPDATE_DT_HALF = UPDATE_DT / 2.f;
+
+	static constexpr uint32_t MAX_RAY_RECURSION_DEPTH = 3U;
 }
 
 #endif

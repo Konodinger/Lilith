@@ -41,8 +41,8 @@ namespace lth {
         VkMemoryPropertyFlags getMemoryPropertyFlags() const { return memoryPropertyFlags; }
         VkDeviceSize getBufferSize() const { return bufferSize; }
 
-    private:
         static VkDeviceSize getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment);
+    private:
 
         LthDevice& lthDevice;
         void* mapped = nullptr;

@@ -50,6 +50,9 @@ namespace lth {
 		std::vector<std::unique_ptr<LthBuffer>> cboBuffers{};
 		std::vector<VkDescriptorSet> globalDescriptorSets{};
 		std::vector<VkDescriptorSet> computeDescriptorSets{};
+		std::vector<VkDescriptorSet> rayTracingDescriptorSets{};
+
+		LthTexture rtOutputImage{ 0, lthDevice, lthRenderer };
 
 		LthScene scene{ lthDevice };
 

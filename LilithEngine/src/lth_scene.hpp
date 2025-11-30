@@ -59,8 +59,10 @@ namespace lth {
 		inline const ElementMap<LthTexture>& textures() const { return textureMap; }
 
 		std::vector<VkDescriptorImageInfo> const getDescriptorImagesInfos();
+		VkDescriptorBufferInfo const getTLASInfos();
 		const std::unordered_map<id_t, id_t>& const getInstanceArray() { return instanceArray; }
 
+		VkWriteDescriptorSetAccelerationStructureKHR const getTLASDescriptorInfo() { return descriptorAccStructInfo; }
 
 	private:
 		LthDevice& lthDevice;
@@ -80,6 +82,7 @@ namespace lth {
 	
 		std::unordered_map<id_t, id_t> instanceArray {}; // Map of { gameObjectId, modelId }
 		AccelerationStructure tlas{};
+		VkWriteDescriptorSetAccelerationStructureKHR descriptorAccStructInfo{ VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR };
 	};
 }
 

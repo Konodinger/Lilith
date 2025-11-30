@@ -73,6 +73,9 @@ namespace lth {
 
 		// (Almost) common part with blas
 		buildAccelerationStructure(lthDevice, VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR, asGeometry, asBuildRangeInfo, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR, tlas);
+		
+		descriptorAccStructInfo.accelerationStructureCount = 1;
+		descriptorAccStructInfo.pAccelerationStructures = &tlas.handle;
 	}
 
 	const std::shared_ptr<LthGameObject> LthScene::createGameObject() {
@@ -129,6 +132,10 @@ namespace lth {
 				: textureMap.at(textureDescriptorArray[i])->imageInfo());
 		}
 		return descriptorImagesInfos;
+	}
+
+	VkDescriptorBufferInfo const LthScene::getTLASInfos() {
+		return tlas.buffer->descriptorInfo();
 	}
 
 	void LthScene::linkGameObjectToModel(id_t gameObjectId, id_t modelId) {

@@ -113,9 +113,8 @@ namespace lth {
 		}
 	}
 
-	void LthParticleSystem::dispatch(FrameInfo& frameInfo, VkDescriptorSet computeDescriptorSet) {
+	void LthParticleSystem::dispatch(FrameInfo& frameInfo, VkDescriptorSet& computeDescriptorSet) {
 
-		if (!activateCompute) return;
 		VkCommandBuffer commandBuffer = frameInfo.computeCommandBuffer;
 		lthComputePipeline->bind(commandBuffer);
 

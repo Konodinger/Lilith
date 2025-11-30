@@ -38,6 +38,7 @@ namespace lth {
       VkInstance const& getInstance() { return instance; }
       VkCommandPool getCommandPool() { return commandPool; }
       VkDevice getDevice() { return device; }
+      LthWindow const& getWindow() { return window; }
       VkSurfaceKHR getSurface() { return surface; }
       VkQueue getGraphicsQueue() { return graphicsQueue; }
       VkQueue getPresentQueue() { return presentQueue; }
@@ -99,7 +100,8 @@ namespace lth {
           VkFormat imageFormat,
           int32_t texWidth,
           int32_t texHeight,
-          uint32_t mipLevels);
+          uint32_t mipLevels,
+          VkImageLayout newImageLayout);
 
       // Properties helper methods
       VkSampleCountFlagBits getMsaaSamples() { return msaaSamples; }
@@ -117,6 +119,8 @@ namespace lth {
       VkPhysicalDeviceFeatures2 physicalDeviceFeatures2{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
       VkPhysicalDeviceVulkan12Features physicalDeviceFeatures1_2{
           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES };
+      VkPhysicalDeviceVulkan13Features physicalDeviceFeatures1_3{
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES };
       VkPhysicalDeviceRayTracingPipelineFeaturesKHR rayTracingFeatures{
         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR };
       VkPhysicalDeviceAccelerationStructureFeaturesKHR accelStructFeatures{
@@ -125,6 +129,8 @@ namespace lth {
       VkPhysicalDeviceFeatures2 physicalDeviceFeatures2_Get{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
       VkPhysicalDeviceVulkan12Features physicalDeviceFeatures1_2_Get{
           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES };
+      VkPhysicalDeviceVulkan13Features physicalDeviceFeatures1_3_Get{
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES };
       VkPhysicalDeviceRayTracingPipelineFeaturesKHR rayTracingFeatures_Get{
         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR };
       VkPhysicalDeviceAccelerationStructureFeaturesKHR accelStructFeatures_Get{
