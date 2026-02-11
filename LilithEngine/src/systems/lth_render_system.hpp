@@ -16,26 +16,19 @@ namespace lth {
 	};
 
 	class LthRenderSystem : public LthGraphicsSystem {
-		inline static std::string vertexShaderSpvPath = SHADERSFOLDERPATH("standard.vert");
-		inline static std::string fragmentShaderSpvPath = SHADERSFOLDERPATH("standard.frag");
-
+		LthGraphicsPipelineFilePaths renderFilePaths = {
+			.vertexFilePath = SHADERSPIRVFOLDERPATH("standard.vert"),
+			.fragmentFilePath = SHADERSPIRVFOLDERPATH("standard.frag") };
 	public:
 
-		LthRenderSystem(LthDevice& device, VkRenderPass renderPass, DescriptorSetLayouts& setLayouts);
-		//~LthRenderSystem();
+		LthRenderSystem(LthDevice& device, LthShaderCompiler& shaderCompiler, VkRenderPass renderPass, DescriptorSetLayouts& setLayouts);
 
 		LthRenderSystem(const LthRenderSystem&) = delete;
 		LthRenderSystem& operator=(const LthRenderSystem&) = delete;
 		
 		void render(FrameInfo &frameInfo);
 	private:
-		//void createPipelineLayout(DescriptorSetLayouts& setLayouts);
 		void createPipeline(VkRenderPass renderPass);
-
-
-		//LthDevice &lthDevice;
-		//std::unique_ptr<LthGraphicsPipeline> lthGraphicsPipeline;
-		//VkPipelineLayout pipelineLayout;
 	};
 }
 

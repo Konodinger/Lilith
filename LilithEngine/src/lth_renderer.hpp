@@ -43,6 +43,7 @@ namespace lth {
 			return currentFrameIndex;
 		}
 
+		void waitForSwapChainWork();
 		bool beginFrame();
 		bool beginComputes();
 		void endFrame();

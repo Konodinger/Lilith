@@ -22,7 +22,9 @@ namespace lth {
     App::App() :
         cameraController{},
         viewerTransform{},
-        startingTime{ std::chrono::high_resolution_clock::now() } {
+        startingTime{ std::chrono::high_resolution_clock::now() }
+    {
+        lthShaderCompiler.createDefaultSlangSession();
 
         assert(GLOBALPOOLMAXSETS >= MAX_FRAMES_IN_FLIGHT && "Error: globalPool default size is too small for the swap chain.");
         generalDescriptorPool = LthDescriptorPool::Builder(lthDevice)
@@ -51,6 +53,7 @@ namespace lth {
 
         systemSet = std::make_unique<LthSystemSet>(
             lthDevice,
+            lthShaderCompiler,
             lthRenderer.getSwapChainMainRenderPass(),
             setLayouts,
             cboBuffers
@@ -63,6 +66,32 @@ namespace lth {
 
 		while (!lthWindow.shouldClose()) {
 			glfwPollEvents();
+
+            if (rtOutputImage.width() != lthRenderer.getSwapChainImageExtent().width
+                || rtOutputImage.height() != lthRenderer.getSwapChainImageExtent().height) {
+                rtOutputImage.resizeImage(lthRenderer.getSwapChainImageExtent());
+
+                if (rayTracingDescriptorSets.size()) {
+                    auto descriptorTLASInfo = scene.getTLASInfos();
+                    auto tlasDescriptorInfo = scene.getTLASDescriptorInfo();
+                    VkDescriptorImageInfo rtOutputImageInfo{};
+                    rtOutputImageInfo.imageLayout = rtOutputImage.getLayout();
+                    rtOutputImageInfo.imageView = rtOutputImage.textureImageView;
+
+                    for (int i = 0; i < rayTracingDescriptorSets.size(); ++i) {
+                        LthDescriptorWriter(*setLayouts.rayTracingSetLayout, *generalDescriptorPool)
+                            .writeTLAS(0, &descriptorTLASInfo, tlasDescriptorInfo)
+                            .writeImage(1, &rtOutputImageInfo)
+                            .overwrite(rayTracingDescriptorSets[i]);
+                    }
+                }
+            }
+
+            if (checkPipelineForUpdates) {
+                lthRenderer.waitForSwapChainWork();
+                systemSet->rayTracingSystem.checkForPipelineUpdates();
+                checkPipelineForUpdates = false;
+            }
 
             auto newTime = std::chrono::high_resolution_clock::now();
             float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
@@ -358,6 +387,10 @@ namespace lth {
 
     void App::showImGui() {
         ImGui::Begin("Frame manager");
+
+        if (ImGui::Button("Update shaders")) {
+            checkPipelineForUpdates = true;
+        }
 
         ImGui::Checkbox("Update scene", &activateUpdate);
         ImGui::Checkbox("Compute particle system", &systemSet->particleSystem.activateCompute);

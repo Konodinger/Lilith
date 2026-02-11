@@ -66,6 +66,10 @@ namespace lth {
 		commandBuffers.clear();
 	}
 
+	void LthRenderer::waitForSwapChainWork() {
+		lthSwapChain->waitForFrameFences(true);
+	}
+
 	bool LthRenderer::beginFrame() {
 		assert(!isFrameStarted && "Can't call beginFrame while already in progress.");
 		

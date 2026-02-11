@@ -42,6 +42,7 @@ class LthSwapChain {
   }
   VkFormat findDepthFormat();
 
+  void waitForFrameFences(bool previousFrame); // Either previous frame or current frame.
   VkResult acquireNextImage(uint32_t *imageIndex);
   void copyImageToSwapChain(VkCommandBuffer commandBuffer, LthTexture& sourceImage, uint32_t imageIndex);
   void submitComputeCommandBuffers(const VkCommandBuffer * commandBuffer, uint32_t imageIndex);

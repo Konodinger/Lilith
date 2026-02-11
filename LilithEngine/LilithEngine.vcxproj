@@ -89,6 +89,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;$(ProjectDir)src\libraries\glfw-3.3.8.bin.WIN64\lib-vc2022</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;slang.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>$(ProjectDir)shadersCompile.bat</Command>
@@ -111,6 +112,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;$(ProjectDir)src\libraries\glfw-3.3.8.bin.WIN64\lib-vc2022</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;slang.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>$(ProjectDir)shadersCompile.bat</Command>
@@ -130,7 +132,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;$(ProjectDir)src\libraries\glfw-3.3.8.bin.WIN64\lib-vc2022</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;slang.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>$(ProjectDir)shadersCompile.bat</Command>
@@ -159,7 +161,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;$(ProjectDir)src\libraries\glfw-3.3.8.bin.WIN64\lib-vc2022</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;slang.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>$(ProjectDir)shadersCompile.bat</Command>
@@ -189,6 +191,7 @@
     <ClCompile Include="src\lth_compile_options.cpp" />
     <ClCompile Include="src\lth_scene.cpp" />
     <ClCompile Include="src\lth_scene.hpp" />
+    <ClCompile Include="src\lth_shader_compiler.cpp" />
     <ClCompile Include="src\pipelines\lth_compute_pipeline.cpp" />
     <ClCompile Include="src\lth_descriptors.cpp" />
     <ClCompile Include="src\lth_device.cpp" />
@@ -221,6 +224,7 @@
     <ClInclude Include="src\libraries\imgui\misc\cpp\imgui_stdlib.h" />
     <ClInclude Include="src\lth_acceleration_structure.hpp" />
     <ClInclude Include="src\lth_compile_options.hpp" />
+    <ClInclude Include="src\lth_shader_compiler.hpp" />
     <ClInclude Include="src\pipelines\lth_compute_pipeline.hpp" />
     <ClInclude Include="src\lth_global_info.hpp" />
     <ClInclude Include="src\pipelines\lth_graphics_pipeline.hpp" />
@@ -249,6 +253,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="shadersCompile.bat" />
+    <None Include="shaders\Payload.slang" />
+    <None Include="shaders\rayGen.slang" />
+    <None Include="shaders\miss.slang" />
+    <None Include="shaders\chit.slang" />
     <None Include="shaders\rayTracing\standardRT.rahit" />
     <None Include="shaders\rayTracing\standardRT.rchit" />
     <None Include="shaders\rayTracing\standardRT.rgen" />

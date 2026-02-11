@@ -13,13 +13,14 @@ namespace lth {
 	};
 
 	class LthRayTracingSystem : public LthSystem {
-		LthRayTracingPipelineFilePaths rayTracingFilePaths = { 
-			.rayGenFilePath = SHADERSFOLDERPATH("rayTracing/standardRT.rgen"),
-			.anyHitFilePath = SHADERSFOLDERPATH("rayTracing/standardRT.rahit"),
-			.chitFilePath = SHADERSFOLDERPATH("rayTracing/standardRT.rchit"),
-			.missFilePath = SHADERSFOLDERPATH("rayTracing/standardRT.rmiss") };
+		LthRayTracingPipelineFilePaths rayTracingFilePaths = {
+			.rayGenFilePath = "rayGen.slang",
+			.missFilePath = "miss.slang",
+			.chitFilePath = "chit.slang",
+			.anyHitFilePath = SHADERSPIRVFOLDERPATH("rayTracing/standardRT.rahit") };
 	public:
 		LthRayTracingSystem(LthDevice& device,
+			LthShaderCompiler& shaderCompiler,
 			VkRenderPass renderPass,
 			DescriptorSetLayouts& setLayouts);
 		~LthRayTracingSystem() {
@@ -27,6 +28,7 @@ namespace lth {
 		}
 
 		void createPipeline(VkRenderPass renderPass);
+		bool checkForPipelineUpdates() override;
 		void trace(FrameInfo& frameInfo, VkDescriptorSet& computeDescriptorSet);
 
 		bool activateTrace = true;

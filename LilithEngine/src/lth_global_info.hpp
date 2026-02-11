@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define SHADERSFOLDERPATH(fileName) "shadersSpirv/" + std::string(fileName) + ".spv"
+#define SHADERSPIRVFOLDERPATH(fileName) "shadersSpirv/" + std::string(fileName) + ".spv"
 #define MODELSFOLDERPATH(fileName) "models/" + std::string(fileName)
 #define TEXTURESFOLDERPATH(fileName) "textures/" + std::string(fileName)
 #define IMGUIFONTSFOLDERPATH(fileName) "src/libraries/imgui/misc/fonts/" fileName

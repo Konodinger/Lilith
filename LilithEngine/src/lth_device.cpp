@@ -714,6 +714,7 @@ namespace lth {
         case VK_IMAGE_LAYOUT_GENERAL:
             barrier.srcAccessMask = VK_ACCESS_NONE;
             sourceStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+            break;
         default:
             throw std::invalid_argument("Unsupported layout transition! (Unexpected initial layout)");
         }

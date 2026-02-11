@@ -4,8 +4,9 @@ namespace lth {
 
 	LthRayTracingSystem::LthRayTracingSystem(
 		LthDevice& device,
+		LthShaderCompiler& shaderCompiler,
 		VkRenderPass renderPass,
-		DescriptorSetLayouts& setLayouts) : LthSystem(device, renderPass, setLayouts) {
+		DescriptorSetLayouts& setLayouts) : LthSystem(device, shaderCompiler, renderPass, setLayouts) {
 
 		VkPushConstantRange pushConstantRange{};
 		pushConstantRange.stageFlags = VK_SHADER_STAGE_ALL;
@@ -23,7 +24,12 @@ namespace lth {
 		lthRayTracingPipeline = std::make_unique<LthRayTracingPipeline>(
 			lthDevice,
 			rayTracingPipelineLayout,
+			lthShaderCompiler,
 			rayTracingFilePaths);
+	}
+
+	bool LthRayTracingSystem::checkForPipelineUpdates() {
+		return lthRayTracingPipeline->checkForUpdatesAndReload();
 	}
 
 	void LthRayTracingSystem::trace(FrameInfo& frameInfo, VkDescriptorSet& computeDescriptorSet) {

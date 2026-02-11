@@ -274,5 +274,11 @@
     <None Include="shaders\rayTracing\standardRT.rchit" />
     <None Include="shaders\rayTracing\standardRT.rgen" />
     <None Include="shaders\rayTracing\standardRT.rmiss" />
+    <None Include="shaders\rayGen.slang" />
+    <None Include="shaders\miss.slang" />
+    <None Include="shaders\chit.slang" />
+    <None Include="shaders\Payload.slang">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

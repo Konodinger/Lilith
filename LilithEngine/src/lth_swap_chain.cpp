@@ -83,14 +83,23 @@ namespace lth {
       }
     }
 
+
+    void LthSwapChain::waitForFrameFences(bool previousFrame) {
+        size_t frame = currentFrame;
+        if (previousFrame) {
+            frame = (frame + MAX_FRAMES_IN_FLIGHT - 1) % MAX_FRAMES_IN_FLIGHT;
+        }
+        std::vector<VkFence> waitFences = { computeInFlightFences[frame], renderInFlightFences[frame] };
+        vkWaitForFences(
+            lthDevice.getDevice(),
+            static_cast<uint32_t>(waitFences.size()),
+            waitFences.data(),
+            VK_TRUE,
+            std::numeric_limits<uint64_t>::max());
+    }
+
     VkResult LthSwapChain::acquireNextImage(uint32_t *imageIndex) {
-        std::vector<VkFence> waitFences = { computeInFlightFences[currentFrame], renderInFlightFences[currentFrame] };
-      vkWaitForFences(
-          lthDevice.getDevice(),
-          static_cast<uint32_t>(waitFences.size()),
-          waitFences.data(),
-          VK_TRUE,
-          std::numeric_limits<uint64_t>::max());
+      waitForFrameFences(false);
 
       if (imageAvailableSemaphores[currentFrame].second) {
           throw std::runtime_error("Can't acquire the next image, the semaphore is still in use.");

@@ -8,6 +8,7 @@
 #include "lth_descriptors.hpp"
 #include "lth_texture.hpp"
 #include "lth_scene.hpp"
+#include "lth_shader_compiler.hpp"
 #include "systems/lth_system_set.hpp"
 #include "keyboard_movement_control.hpp"
 #include "gameObjects/lth_game_object.hpp"
@@ -42,6 +43,7 @@ namespace lth {
 		LthWindow lthWindow{ WIDTH, HEIGHT, "Hello I'm Lilith!" };
 		LthDevice lthDevice{ lthWindow };
 		LthRenderer lthRenderer{ lthWindow, lthDevice };
+		LthShaderCompiler lthShaderCompiler{ lthDevice };
 		std::unique_ptr<LthSystemSet> systemSet{};
 
 		std::unique_ptr<LthDescriptorPool> generalDescriptorPool{};
@@ -64,6 +66,7 @@ namespace lth {
 		float frameTimeAccumulator = 0;
 
 		bool activateUpdate = true;
+		bool checkPipelineForUpdates = false;
 	};
 }
 

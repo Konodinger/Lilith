@@ -15,13 +15,14 @@ namespace lth {
 		LthParticleSystem particleSystem;
 
 		LthSystemSet(LthDevice& device,
+			LthShaderCompiler& shaderCompiler,
 			VkRenderPass renderPass,
 			DescriptorSetLayouts& setLayouts,
 			std::vector<std::unique_ptr<LthBuffer>>& cboBuffers) :
-			particleSystem(device, renderPass, setLayouts, cboBuffers),
-			renderSystem(device, renderPass, setLayouts),
-			rayTracingSystem(device, renderPass, setLayouts),
-			pointLightSystem(device, renderPass, setLayouts){};
+			particleSystem(device, shaderCompiler, renderPass, setLayouts, cboBuffers),
+			renderSystem(device, shaderCompiler, renderPass, setLayouts),
+			rayTracingSystem(device, shaderCompiler, renderPass, setLayouts),
+			pointLightSystem(device, shaderCompiler, renderPass, setLayouts){};
 	};
 }
 

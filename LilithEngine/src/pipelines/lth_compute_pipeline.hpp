@@ -20,25 +20,29 @@ namespace lth {
 	public:
 		LthComputePipeline(
 			LthDevice& device,
-			VkPipelineLayout& pipelineLayout,
+			const VkPipelineLayout& pipelineLayout,
+			LthShaderCompiler& shaderCompiler,
 			const std::string& computeFilePath);
 		~LthComputePipeline() override;
 
 		LthComputePipeline() = default;
 		LthComputePipeline(const LthComputePipeline&) = delete;
 		LthComputePipeline& operator=(const LthComputePipeline&) = delete;
+		void clearPipeline() override;
+		void reloadPipeline() override;
 
 		static void defaultComputePipelineConfigInfo(LthComputePipelineConfigInfo& configInfo);
 
 		void bind(VkCommandBuffer commandBuffer) override;
 	private:
 		void createComputePipeline(
-			VkPipelineLayout& pipelineLayout,
+			const VkPipelineLayout& pipelineLayout,
 			const std::string& computeFilePath);
 
 
 		VkPipeline computePipeline;
 		VkShaderModule computeShaderModule;
+		const std::string& computeFilePath;
 	};
 }
 

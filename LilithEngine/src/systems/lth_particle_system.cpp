@@ -8,10 +8,11 @@ namespace lth {
 
 	LthParticleSystem::LthParticleSystem(
 		LthDevice& device,
+		LthShaderCompiler& shaderCompiler,
 		VkRenderPass renderPass,
 		DescriptorSetLayouts& setLayouts,
 		std::vector<std::unique_ptr<LthBuffer>>& cboBuffers)
-		: LthGraphicsSystem(device, renderPass, setLayouts) {
+		: LthGraphicsSystem(device, shaderCompiler, renderPass, setLayouts) {
 		storageBuffers = std::move(cboBuffers);
 		createPipelineLayout(&graphicsPipelineLayout);
 		createPipeline(renderPass);
@@ -51,8 +52,8 @@ namespace lth {
 		lthGraphicsPipeline = std::make_unique<LthGraphicsPipeline>(
 			lthDevice,
 			pipelineConfig,
-			vertexShaderSpvPath,
-			fragmentShaderSpvPath);
+			lthShaderCompiler,
+			particleRenderFilePaths);
 	}
 
 	void LthParticleSystem::createComputePipeline(VkRenderPass renderPass) {
@@ -61,8 +62,16 @@ namespace lth {
 		lthComputePipeline = std::make_unique<LthComputePipeline>(
 			lthDevice,
 			computePipelineLayout,
+			lthShaderCompiler,
 			computeShaderSpvPath);
 	}
+
+	bool LthParticleSystem::checkForPipelineUpdates() {
+		bool updates = lthGraphicsPipeline->checkForUpdatesAndReload();
+		updates |= lthComputePipeline->checkForUpdatesAndReload();
+		return updates;
+	}
+
 
 	void *LthParticleSystem::initialStorageBufferData() {
 		std::default_random_engine rndEngine((unsigned)time(nullptr));

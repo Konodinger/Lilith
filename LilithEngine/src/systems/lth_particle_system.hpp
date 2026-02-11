@@ -46,13 +46,15 @@ namespace lth {
 	static constexpr uint32_t PARTICLE_COUNT = 1024;
 
 	class LthParticleSystem : public LthGraphicsSystem {
-		inline static std::string vertexShaderSpvPath = SHADERSFOLDERPATH("particle.vert");
-		inline static std::string fragmentShaderSpvPath = SHADERSFOLDERPATH("particle.frag");
-		inline static std::string computeShaderSpvPath = SHADERSFOLDERPATH("particle.comp");
+		LthGraphicsPipelineFilePaths particleRenderFilePaths = {
+			.vertexFilePath = SHADERSPIRVFOLDERPATH("particle.vert"),
+			.fragmentFilePath = SHADERSPIRVFOLDERPATH("particle.frag") };
+		inline static std::string computeShaderSpvPath = SHADERSPIRVFOLDERPATH("particle.comp");
 
 	public:
 
 		LthParticleSystem(LthDevice& device,
+						LthShaderCompiler& shaderCompiler,
 						VkRenderPass renderPass,
 						DescriptorSetLayouts& setLayouts,
 						std::vector<std::unique_ptr<LthBuffer>>& cboBuffers);
@@ -64,11 +66,12 @@ namespace lth {
 		void dispatch(FrameInfo& frameInfo, VkDescriptorSet& computeDescriptorSet);
 		void render(FrameInfo& frameInfo);
 
+		bool checkForPipelineUpdates() override;
+
 		static void createStorageBuffer(LthDevice&, std::vector<std::unique_ptr<LthBuffer>>&);
 
 		bool activateCompute = true;
 	private:
-		//void createPipelineLayout(DescriptorSetLayouts& setLayouts);
 		void createPipeline(VkRenderPass renderPass);
 		void createComputePipeline(VkRenderPass renderPass);
 

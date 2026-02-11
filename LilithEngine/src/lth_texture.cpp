@@ -191,4 +191,36 @@ namespace lth {
 
 		return imageInfo;
 	}
+
+
+	void LthTexture::resizeImage(const VkExtent2D& extent) {
+		vkDestroySampler(lthDevice.getDevice(), textureSampler, nullptr);
+		vkDestroyImageView(lthDevice.getDevice(), textureImageView, nullptr);
+		vkDestroyImage(lthDevice.getDevice(), textureImage, nullptr);
+		vkFreeMemory(lthDevice.getDevice(), textureImageMemory, nullptr);
+
+		texWidth = extent.width;
+		texHeight = extent.height;
+
+		lthDevice.createImage(
+			texWidth,
+			texHeight,
+			texFormat,
+			VK_IMAGE_TILING_OPTIMAL,
+			VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_STORAGE_BIT,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			textureImage,
+			textureImageMemory,
+			mipLevels,
+			VK_SAMPLE_COUNT_1_BIT);
+
+		currentImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+		transitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		VkClearColorValue defaultColor = { 0.f, 0.f, 0.f, 0.f };
+		clearImage(&defaultColor);
+		transitionImageLayout(VK_IMAGE_LAYOUT_GENERAL);
+		createTextureImageView();
+		createTextureSampler();
+	}
 }

@@ -11,11 +11,22 @@ namespace lth {
 	LthGraphicsPipeline::LthGraphicsPipeline(
 		LthDevice& device,
 		const LthGraphicsPipelineConfigInfo& configInfo,
-		const std::string& vertFilePath,
-		const std::string& fragFilePath) : LthPipeline(device) {
-		createGraphicsPipeline(configInfo, vertFilePath, fragFilePath);
+		LthShaderCompiler& shaderCompiler,
+		const LthGraphicsPipelineFilePaths& graphicsFilePath) : LthPipeline(device, configInfo.pipelineLayout, shaderCompiler),
+		configInfo(configInfo), graphicsFilePath(graphicsFilePath) {
+		createGraphicsPipeline(configInfo, graphicsFilePath);
 	}
+
 	LthGraphicsPipeline::~LthGraphicsPipeline() {
+		clearPipeline();
+	}
+
+	void LthGraphicsPipeline::reloadPipeline() {
+		clearPipeline();
+		createGraphicsPipeline(configInfo, graphicsFilePath);
+	}
+	
+	void LthGraphicsPipeline::clearPipeline() {
 		vkDestroyShaderModule(lthDevice.getDevice(), vertShaderModule, nullptr);
 		vkDestroyShaderModule(lthDevice.getDevice(), fragShaderModule, nullptr);
 		vkDestroyPipeline(lthDevice.getDevice(), graphicsPipeline, nullptr);
@@ -109,8 +120,7 @@ namespace lth {
 
 	void LthGraphicsPipeline::createGraphicsPipeline(
 		const LthGraphicsPipelineConfigInfo& configInfo,
-		const std::string& vertFilePath,
-		const std::string& fragFilePath) {
+		const LthGraphicsPipelineFilePaths& graphicsFilePath) {
 
 		assert(
 			configInfo.pipelineLayout != VK_NULL_HANDLE &&
@@ -118,8 +128,8 @@ namespace lth {
 		assert(
 			configInfo.renderPass != VK_NULL_HANDLE &&
 			"Cannot create graphics pipeline:: no renderPass provided in configInfo.");
-		auto vertCode = readFile(vertFilePath);
-		auto fragCode = readFile(fragFilePath);
+		auto vertCode = readFile(graphicsFilePath.vertexFilePath);
+		auto fragCode = readFile(graphicsFilePath.fragmentFilePath);
 
 		createShaderModule(vertCode, &vertShaderModule);
 		createShaderModule(fragCode, &fragShaderModule);

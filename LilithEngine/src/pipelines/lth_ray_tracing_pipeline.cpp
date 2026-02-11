@@ -1,20 +1,39 @@
 #include "lth_ray_tracing_pipeline.hpp"
 #include "../lth_global_info.hpp"
 
+
+#include <slang/slang-com-ptr.h>
+#include <slang/slang.h>
+#include <stdexcept>
+#include <iostream>
+
 namespace lth {
 
 	LthRayTracingPipeline::LthRayTracingPipeline(
 		LthDevice& device,
-		VkPipelineLayout& pipelineLayout,
-		const LthRayTracingPipelineFilePaths& rayTracingFilePaths) : LthPipeline(device) {
+		const VkPipelineLayout& pipelineLayout,
+		LthShaderCompiler& shaderCompiler,
+		const LthRayTracingPipelineFilePaths& rayTracingFilePaths) : LthPipeline(device, pipelineLayout, shaderCompiler),
+		rayTracingFilePaths(rayTracingFilePaths) {
+		slangSessions.push_back(shaderCompiler.createDefaultSlangSession());
 		createRayTracingPipeline(pipelineLayout, rayTracingFilePaths);
 	}
 
+
 	LthRayTracingPipeline::~LthRayTracingPipeline() {
+		clearPipeline();
+	}
+
+	void LthRayTracingPipeline::reloadPipeline() {
+		clearPipeline();
+		createRayTracingPipeline(lthPipelineLayout, rayTracingFilePaths);
+	}
+
+	void LthRayTracingPipeline::clearPipeline() {
 		vkDestroyShaderModule(lthDevice.getDevice(), rayGenShaderModule, nullptr);
-		vkDestroyShaderModule(lthDevice.getDevice(), anyHitShaderModule, nullptr);
-		vkDestroyShaderModule(lthDevice.getDevice(), chitShaderModule, nullptr);
 		vkDestroyShaderModule(lthDevice.getDevice(), missShaderModule, nullptr);
+		vkDestroyShaderModule(lthDevice.getDevice(), chitShaderModule, nullptr);
+		vkDestroyShaderModule(lthDevice.getDevice(), anyHitShaderModule, nullptr);
 		vkDestroyPipeline(lthDevice.getDevice(), rayTracingPipeline, nullptr);
 	}
 
@@ -29,21 +48,22 @@ namespace lth {
 	}
 
 	void LthRayTracingPipeline::createRayTracingPipeline(
-		VkPipelineLayout& pipelineLayout,
+		const VkPipelineLayout& pipelineLayout,
 		const LthRayTracingPipelineFilePaths& rayTracingFilePaths) {
 
 		assert(pipelineLayout != VK_NULL_HANDLE &&
 			"Cannot create ray tracing pipeline: no pipelineLayout provided in configInfo.");
 
-		auto rayGenCode = readFile(rayTracingFilePaths.rayGenFilePath);
-		auto anyHitCode = readFile(rayTracingFilePaths.anyHitFilePath);
-		auto chitCode = readFile(rayTracingFilePaths.chitFilePath);
-		auto missCode = readFile(rayTracingFilePaths.missFilePath);
+		if (rayTracingFilePaths.rayGenFilePath.ends_with(".slang")) {
 
-		createShaderModule(rayGenCode, &rayGenShaderModule);
+		}
+		
+		auto anyHitCode = readFile(rayTracingFilePaths.anyHitFilePath);
 		createShaderModule(anyHitCode, &anyHitShaderModule);
-		createShaderModule(chitCode, &chitShaderModule);
-		createShaderModule(missCode, &missShaderModule);
+
+		rayGenShaderModule = lthShaderCompiler.createShaderModule(rayTracingFilePaths.rayGenFilePath, &slangSessions[0], "main");
+		missShaderModule = lthShaderCompiler.createShaderModule(rayTracingFilePaths.missFilePath, &slangSessions[0], "main");
+		chitShaderModule = lthShaderCompiler.createShaderModule(rayTracingFilePaths.chitFilePath, &slangSessions[0], "main");
 
 		std::vector<VkPipelineShaderStageCreateInfo> shaderStageInfos(4);
 		shaderStageInfos[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -55,8 +75,8 @@ namespace lth {
 		shaderStageInfos[0].pSpecializationInfo = nullptr;
 
 		shaderStageInfos[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		shaderStageInfos[1].stage = VK_SHADER_STAGE_ANY_HIT_BIT_KHR;
-		shaderStageInfos[1].module = anyHitShaderModule;
+		shaderStageInfos[1].stage = VK_SHADER_STAGE_MISS_BIT_KHR;
+		shaderStageInfos[1].module = missShaderModule;
 		shaderStageInfos[1].pName = "main";
 		shaderStageInfos[1].flags = 0;
 		shaderStageInfos[1].pNext = nullptr;
@@ -71,8 +91,8 @@ namespace lth {
 		shaderStageInfos[2].pSpecializationInfo = nullptr;
 
 		shaderStageInfos[3].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		shaderStageInfos[3].stage = VK_SHADER_STAGE_MISS_BIT_KHR;
-		shaderStageInfos[3].module = missShaderModule;
+		shaderStageInfos[3].stage = VK_SHADER_STAGE_ANY_HIT_BIT_KHR;
+		shaderStageInfos[3].module = anyHitShaderModule;
 		shaderStageInfos[3].pName = "main";
 		shaderStageInfos[3].flags = 0;
 		shaderStageInfos[3].pNext = nullptr;
@@ -92,18 +112,19 @@ namespace lth {
 		shaderGroupInfos[0] = group;
 
 		// Miss
-		group.generalShader = 3;
+		group.generalShader = 1;
 		shaderGroupInfos[1] = group;
+
+		// Chit
+		group.type = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
+		group.generalShader = VK_SHADER_UNUSED_KHR;
+		group.closestHitShader = 2;
+		shaderGroupInfos[2] = group;
 
 		// AnyHit
 		group.type = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
-		group.generalShader = VK_SHADER_UNUSED_KHR;
-		group.anyHitShader = 1;
-		shaderGroupInfos[2] = group;
-
-		// Chit
-		group.anyHitShader = VK_SHADER_UNUSED_KHR;
-		group.closestHitShader = 2;
+		group.closestHitShader = VK_SHADER_UNUSED_KHR;
+		group.anyHitShader = 3;
 		shaderGroupInfos[3] = group;
 
 		VkRayTracingPipelineCreateInfoKHR rtPipelineCreateInfo {};
@@ -114,8 +135,8 @@ namespace lth {
 		rtPipelineCreateInfo.pGroups = shaderGroupInfos.data();
 		rtPipelineCreateInfo.maxPipelineRayRecursionDepth = std::max(MAX_RAY_RECURSION_DEPTH, lthDevice.rayTracingProperties.maxRayRecursionDepth);
 		rtPipelineCreateInfo.layout = pipelineLayout;
-
 		vkCreateRayTracingPipelinesKHR(lthDevice.getDevice(), VK_NULL_HANDLE, VK_NULL_HANDLE, 1, &rtPipelineCreateInfo, nullptr, &rayTracingPipeline);
+		
 	
 		createShaderBindingTable(rtPipelineCreateInfo);
 	}

@@ -33,4 +33,30 @@ namespace lth {
 			throw std::runtime_error("Failed to create shader module!");
 		}
 	}
+
+
+	void LthPipeline::createShaderModule(const Slang::ComPtr<slang::IBlob>& code, VkShaderModule* shaderModule) {
+		VkShaderModuleCreateInfo createInfo{};
+		createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+		createInfo.codeSize = code->getBufferSize();
+		createInfo.pCode = reinterpret_cast<const uint32_t*>(code->getBufferPointer());
+
+		if (vkCreateShaderModule(lthDevice.getDevice(), &createInfo, nullptr, shaderModule) != VK_SUCCESS) {
+			throw std::runtime_error("Failed to create shader module!");
+		}
+	}
+
+	bool LthPipeline::checkForUpdatesAndReload() {
+		bool updates = false;
+		for (auto& session : slangSessions) {
+			if (lthShaderCompiler.checkForUpdates(session, true)) {
+				updates = true;
+			}
+		}
+
+		if (updates) {
+			reloadPipeline();
+		}
+		return updates;
+	}
 }

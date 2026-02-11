@@ -29,18 +29,25 @@ namespace lth {
 		uint32_t subpass = 0;
 	};
 
+	struct LthGraphicsPipelineFilePaths {
+		std::string vertexFilePath = "";
+		std::string fragmentFilePath = "";
+	};
+
 	class LthGraphicsPipeline : public LthPipeline {
 	public:
 		LthGraphicsPipeline(
 			LthDevice& device,
 			const LthGraphicsPipelineConfigInfo& configInfo,
-			const std::string& vertFilePath,
-			const std::string& fragFilePath);
+			LthShaderCompiler& shaderCompiler,
+			const LthGraphicsPipelineFilePaths& graphicsFilePath);
 		~LthGraphicsPipeline() override;
 
 		LthGraphicsPipeline() = default;
 		LthGraphicsPipeline(const LthGraphicsPipeline&) = delete;
 		LthGraphicsPipeline& operator=(const LthGraphicsPipeline&) = delete;
+		void clearPipeline() override;
+		void reloadPipeline() override;
 
 		static void defaultGraphicsPipelineConfigInfo(LthGraphicsPipelineConfigInfo& configInfo);
 		static void enableAlphaBlending(LthGraphicsPipelineConfigInfo& configInfo);
@@ -50,13 +57,15 @@ namespace lth {
 		//static std::vector<char> readFile(const std::string& filePath);
 		void createGraphicsPipeline(
 			const LthGraphicsPipelineConfigInfo& configInfo,
-			const std::string& vertFilePath,
-			const std::string& fragFilePath);
+			const LthGraphicsPipelineFilePaths& graphicsFilePath);
 
 		//void createShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule);
 
 		//LthDevice& lthDevice;
 		VkPipeline graphicsPipeline;
+		const LthGraphicsPipelineConfigInfo& configInfo;
+		const LthGraphicsPipelineFilePaths& graphicsFilePath;
+
 		VkShaderModule vertShaderModule;
 		VkShaderModule fragShaderModule;
 	};

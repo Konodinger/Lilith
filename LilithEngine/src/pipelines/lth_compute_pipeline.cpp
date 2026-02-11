@@ -9,11 +9,23 @@ namespace lth {
 
 	LthComputePipeline::LthComputePipeline(
 		LthDevice& device,
-		VkPipelineLayout& pipelineLayout,
-		const std::string& computeFilePath) : LthPipeline(device) {
+		const VkPipelineLayout& pipelineLayout,
+		LthShaderCompiler& shaderCompiler,
+		const std::string& computeFilePath) : LthPipeline(device, pipelineLayout, shaderCompiler),
+			computeFilePath(computeFilePath) {
 		createComputePipeline(pipelineLayout, computeFilePath);
 	}
+
 	LthComputePipeline::~LthComputePipeline() {
+		clearPipeline();
+	}
+
+	void LthComputePipeline::reloadPipeline() {
+		clearPipeline();
+		createComputePipeline(lthPipelineLayout, computeFilePath);
+	}
+
+	void LthComputePipeline::clearPipeline() {
 		vkDestroyShaderModule(lthDevice.getDevice(), computeShaderModule, nullptr);
 		vkDestroyPipeline(lthDevice.getDevice(), computePipeline, nullptr);
 	}
@@ -27,7 +39,7 @@ namespace lth {
 	}
 
 	void LthComputePipeline::createComputePipeline(
-		VkPipelineLayout& pipelineLayout,
+		const VkPipelineLayout& pipelineLayout,
 		const std::string& computeFilePath) {
 
 		//assert section

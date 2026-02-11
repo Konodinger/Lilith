@@ -11,13 +11,16 @@
 namespace lth {
 
 	class LthPointLightSystem : public LthGraphicsSystem {
-		inline static std::string vertexShaderSpvPath = SHADERSFOLDERPATH("pointLight.vert");
-		inline static std::string fragmentShaderSpvPath = SHADERSFOLDERPATH("pointLight.frag");
+		LthGraphicsPipelineFilePaths pointLightRenderFilePaths = {
+			.vertexFilePath = SHADERSPIRVFOLDERPATH("pointLight.vert"),
+			.fragmentFilePath = SHADERSPIRVFOLDERPATH("pointLight.frag") };
 
 	public:
 
-		LthPointLightSystem(LthDevice& device, VkRenderPass renderPass, DescriptorSetLayouts& setLayouts);
-		//~LthPointLightSystem();
+		LthPointLightSystem(LthDevice& device,
+			LthShaderCompiler& shaderCompiler,
+			VkRenderPass renderPass,
+			DescriptorSetLayouts& setLayouts);
 
 		LthPointLightSystem(const LthPointLightSystem&) = delete;
 		LthPointLightSystem& operator=(const LthPointLightSystem&) = delete;
@@ -25,12 +28,7 @@ namespace lth {
 		void update(FrameInfo& frameInfo, GlobalUBO& ubo);
 		void render(FrameInfo &frameInfo);
 	private:
-		//void createPipelineLayout(DescriptorSetLayouts& setLayouts);
 		void createPipeline(VkRenderPass renderPass);
-
-		//LthDevice &lthDevice;
-		//std::unique_ptr<LthGraphicsPipeline> lthGraphicsPipeline;
-		//VkPipelineLayout pipelineLayout;
 	};
 }
 

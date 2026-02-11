@@ -21,16 +21,17 @@ namespace lth {
 
 	struct LthRayTracingPipelineFilePaths {
 		std::string rayGenFilePath = "";
-		std::string anyHitFilePath = "";
-		std::string chitFilePath = "";
 		std::string missFilePath = "";
+		std::string chitFilePath = "";
+		std::string anyHitFilePath = "";
 	};
 
 	class LthRayTracingPipeline : public LthPipeline {
 	public:
 		LthRayTracingPipeline(
 			LthDevice& device,
-			VkPipelineLayout& pipelineLayout,
+			const VkPipelineLayout& pipelineLayout,
+			LthShaderCompiler& shaderCompiler,
 			const LthRayTracingPipelineFilePaths& rayTracingFilePaths);
 		~LthRayTracingPipeline() override;
 
@@ -38,16 +39,20 @@ namespace lth {
 		LthRayTracingPipeline(const LthRayTracingPipeline&) = delete;
 		LthRayTracingPipeline& operator=(const LthRayTracingPipeline&) = delete;
 
+		void clearPipeline() override;
+		void reloadPipeline() override;
+
 		void bind(VkCommandBuffer commandBuffer) override;
 		void trace(VkCommandBuffer commandBuffer);
 	private:
 		void createRayTracingPipeline(
-			VkPipelineLayout& pipelineLayout,
+			const VkPipelineLayout& pipelineLayout,
 			const LthRayTracingPipelineFilePaths& rayTracingFilePaths);
 		void createShaderBindingTable(VkRayTracingPipelineCreateInfoKHR& rtPipelineCreateInfo);
 
-
 		VkPipeline rayTracingPipeline;
+		const LthRayTracingPipelineFilePaths& rayTracingFilePaths;
+
 		VkShaderModule rayGenShaderModule;
 		VkShaderModule anyHitShaderModule;
 		VkShaderModule chitShaderModule;

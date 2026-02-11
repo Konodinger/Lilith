@@ -7,9 +7,10 @@ namespace lth {
 
 	LthRenderSystem::LthRenderSystem(
 		LthDevice& device,
+		LthShaderCompiler& shaderCompiler,
 		VkRenderPass renderPass,
 		DescriptorSetLayouts& setLayouts)
-		: LthGraphicsSystem(device, renderPass, setLayouts) {
+		: LthGraphicsSystem(device, shaderCompiler, renderPass, setLayouts) {
 		VkPushConstantRange pushConstantRange{};
 		pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 		pushConstantRange.offset = 0;
@@ -34,8 +35,8 @@ namespace lth {
 		lthGraphicsPipeline = std::make_unique<LthGraphicsPipeline>(
 			lthDevice,
 			pipelineConfig,
-			vertexShaderSpvPath,
-			fragmentShaderSpvPath);
+			lthShaderCompiler,
+			renderFilePaths);
 	}
 
 	void LthRenderSystem::render(FrameInfo& frameInfo) {

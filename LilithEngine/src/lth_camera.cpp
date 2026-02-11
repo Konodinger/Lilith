@@ -16,9 +16,9 @@ namespace lth {
 		projectionMatrix[3][2] = -near / (far - near);
 	}
 
-	void LthCamera::setPerspectiveProjection(float fovy, float aspect, float near, float far) {
+	void LthCamera::setPerspectiveProjection(float fov, float aspect, float near, float far) {
 		assert(glm::abs(aspect - std::numeric_limits<float>::epsilon()) > 0.0f);
-		const float tanHalfFovy = tan(fovy / 2.f);
+		const float tanHalfFovy = tan(fov / 2.f);
 		projectionMatrix = glm::mat4{ 0.0f };
 		projectionMatrix[0][0] = 1.f / (aspect * tanHalfFovy);
 		projectionMatrix[1][1] = 1.f / (tanHalfFovy);

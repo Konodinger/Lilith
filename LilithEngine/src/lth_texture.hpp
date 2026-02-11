@@ -44,6 +44,7 @@ namespace lth {
 
 		void transitionImageLayout(VkImageLayout imageLayout);
 		void clearImage(VkClearColorValue* clearColor);
+		void resizeImage(const VkExtent2D& extent);
 
 		uint32_t getDescriptorId() const { return textureDescriptorId; }
 		void setDescriptorId(uint32_t descId) { textureDescriptorId = descId; }
